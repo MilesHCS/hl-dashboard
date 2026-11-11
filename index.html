@@ -198,14 +198,14 @@
 const CONFIG = {
   // 直連模式要顯示的錢包（從電腦打開時，會自動改用 hl_monitor.py 裡的名單）
   traders: [
-    { user: "0x5b5d51203a0f9079f8aeb098a6523a13f298c060", name: "" },
-    { user: "0x5f912dbde4530bc43f8322196db54592e3dd65aa", name: "" },
-    { user: "0x9c6a5b4662c722d2c47f43d6c9813cb080ffa4ed", name: "" },
+    { user: "0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36", name: "BTC、黃金" },
+    { user: "0x5b5d51203a0f9079f8aeb098a6523a13f298c060", name: "大佬、ETH" },
+    { user: "0x46921f6961bdb411b756c9712f6bdb58fbd9164f", name: "黃金" },
   ],
   // 備用：電腦儀表板的網址。填 https 的 Tailscale 網址（https://電腦名稱.tailnet.ts.net）
   // 直連失敗時會自動改用電腦；填 http 網址的話，只會顯示「打開電腦版」按鈕
   computerUrl: "",
-  dexes: [""],        // 和 hl_monitor.py 的 DEXES 一樣
+  dexes: "auto",      // "auto" = 自動包含黃金、股票等 HIP-3 市場；也可以手動指定，例如 ["", "xyz"]
   includeSpot: false, // 成交紀錄是否包含現貨
   recentTrades: 30,
 };
@@ -337,16 +337,46 @@ const CONFIG = {
     return out.slice(0, CONFIG.recentTrades);
   }
 
+  const dexState = (user, dex) => hl(dex ? { type: "clearinghouseState", user, dex } : { type: "clearinghouseState", user });
+  const hasActivity = (st) => !!st && (num(st.marginSummary && st.marginSummary.accountValue) !== 0 ||
+    ((st.assetPositions || []).some((ap) => num((ap.position || {}).szi) !== 0)));
+
+  async function listDexes() {
+    if (CONFIG.dexes !== "auto") return CONFIG.dexes;
+    try {
+      return await cachedDirect("dexes", 3600000, async () => {
+        const list = await hl({ type: "perpDexs" });
+        return [""].concat((list || []).filter((d) => d && d.name).map((d) => String(d.name)));
+      });
+    } catch { return ["", "xyz"]; }
+  }
+
+  // 找出這個錢包在哪些市場有資金或持倉（每分鐘重新掃描一次）
+  async function activeDexes(user) {
+    if (CONFIG.dexes !== "auto") return CONFIG.dexes;
+    return cachedDirect("active:" + user, 60000, async () => {
+      const dexes = await listDexes();
+      const states = await Promise.all(dexes.slice(1).map((d) => dexState(user, d).catch(() => null)));
+      return [""].concat(dexes.slice(1).filter((d, i) => hasActivity(states[i])));
+    });
+  }
+
   const directSource = {
     id: "direct", label: "直連",
     async load(user) {
-      const states = await Promise.all(CONFIG.dexes.map((dex) =>
-        hl(dex ? { type: "clearinghouseState", user, dex } : { type: "clearinghouseState", user })));
+      const dexes = await activeDexes(user);
+      const states = await Promise.all(dexes.map((d) => dexState(user, d)));
       let av = 0; const positions = [];
-      for (const st of states) {
+      states.forEach((st, i) => {
+        const dex = dexes[i];
         av += num(st && st.marginSummary && st.marginSummary.accountValue);
-        for (const ap of (st && st.assetPositions) || []) { const p = ap.position || {}; if (num(p.szi)) positions.push(p); }
-      }
+        for (const ap of (st && st.assetPositions) || []) {
+          const p = { ...(ap.position || {}) };
+          if (!num(p.szi)) continue;
+          if (dex && !String(p.coin || "").includes(":")) p.coin = dex + ":" + p.coin;
+          positions.push(p);
+        }
+      });
       const errors = [];
       let trades = [], portfolio = null;
       try { trades = groupTrades(user, (await cachedDirect("fills:" + user, 30000, () => hl({ type: "userFills", user }))) || []); }
