@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#121211">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="HL 監控">
+<title>Hyperliquid 持倉儀表板</title>
+<link rel="icon" href="data:,">
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #121211;
+    --card: #1a1a19;
+    --card-2: #232321;
+    --line: #2c2c29;
+    --text: #f0efec;
+    --text-2: #c3c2b7;
+    --muted: #8f8e85;
+    --accent: #3987e5;
+    --accent-wash: rgba(57, 135, 229, 0.12);
+    --up: #2fb344;
+    --down: #ef6b6b;
+    --warn: #fab219;
+    --up-wash: rgba(47, 179, 68, 0.14);
+    --down-wash: rgba(239, 107, 107, 0.14);
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      color-scheme: light;
+      --bg: #f2f2f0;
+      --card: #fcfcfb;
+      --card-2: #f0efec;
+      --line: #e3e2de;
+      --text: #0b0b0b;
+      --text-2: #52514e;
+      --muted: #77766f;
+      --accent: #2a78d6;
+      --accent-wash: rgba(42, 120, 214, 0.10);
+      --up: #00751a;
+      --down: #c62f2f;
+      --warn: #a86a00;
+      --up-wash: rgba(0, 117, 26, 0.10);
+      --down-wash: rgba(198, 47, 47, 0.10);
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); }
+  body {
+    font: 15px/1.45 -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  a { color: var(--accent); text-decoration: none; }
+  button { font: inherit; color: inherit; }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 0 14px 28px; }
+  .num { font-variant-numeric: tabular-nums; }
+  .up { color: var(--up); }
+  .down { color: var(--down); }
+  .muted { color: var(--muted); }
+  .sec { color: var(--text-2); }
+
+  /* header */
+  header {
+    position: sticky; top: 0; z-index: 5;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    margin: 0 -14px; padding: 12px 14px 10px;
+    display: flex; align-items: center; gap: 10px;
+    border-bottom: 1px solid var(--line);
+  }
+  .who { flex: 1; min-width: 0; }
+  .who .name { font-weight: 650; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .who .sub { font-size: 12px; color: var(--muted); }
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; padding: 4px 10px; border-radius: 999px;
+    background: var(--card-2); color: var(--text-2); white-space: nowrap;
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+  .pill.live .dot { background: var(--up); box-shadow: 0 0 0 3px var(--up-wash); }
+  .pill.stale .dot { background: var(--warn); }
+  .icon-btn {
+    width: 36px; height: 36px; border-radius: 10px; border: 0;
+    background: var(--card-2); display: grid; place-items: center; cursor: pointer;
+  }
+  .icon-btn svg { width: 18px; height: 18px; stroke: var(--text-2); }
+  .icon-btn.spin svg { animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .chips { display: flex; gap: 8px; overflow-x: auto; padding: 12px 0 2px; scrollbar-width: none; }
+  .chips[hidden] { display: none; }
+  .chip {
+    border: 1px solid var(--line); background: var(--card); border-radius: 999px;
+    padding: 6px 12px; font-size: 13px; white-space: nowrap; cursor: pointer;
+  }
+  .chip[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+
+  .card { background: var(--card); border-radius: 16px; padding: 16px; margin-top: 12px; }
+  .card h2 { font-size: 15px; margin: 0; font-weight: 650; }
+  .card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+
+  /* hero */
+  .label { font-size: 13px; color: var(--muted); }
+  .hero { font-size: 48px; font-weight: 650; letter-spacing: -0.02em; line-height: 1.1; margin: 4px 0 6px; }
+  .hero-sub { font-size: 15px; }
+  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
+  .tile { background: var(--card-2); border-radius: 12px; padding: 10px 12px; }
+  .tile .v { font-size: 17px; font-weight: 600; margin-top: 2px; }
+  .ls { margin-top: 14px; }
+  .ls-bar { display: flex; gap: 2px; height: 8px; border-radius: 999px; overflow: hidden; background: var(--card-2); }
+  .ls-bar span { display: block; height: 100%; }
+  .ls-bar .l { background: var(--up); }
+  .ls-bar .s { background: var(--down); }
+  .ls-legend { display: flex; justify-content: space-between; font-size: 13px; margin-top: 6px; color: var(--text-2); }
+  .key { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; vertical-align: 1px; }
+
+  /* segmented controls */
+  .seg { display: inline-flex; background: var(--card-2); border-radius: 10px; padding: 2px; }
+  .seg button {
+    border: 0; background: transparent; padding: 5px 10px; border-radius: 8px;
+    font-size: 13px; color: var(--text-2); cursor: pointer;
+  }
+  .seg button[aria-pressed="true"] { background: var(--card); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.25); }
+
+  /* chart */
+  .chart-meta { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin: 2px 0 8px; }
+  .chart-meta .big { font-size: 22px; font-weight: 650; }
+  .chart-box { position: relative; }
+  .chart-box svg { display: block; width: 100%; height: 180px; touch-action: pan-y; }
+  .tip {
+    position: absolute; top: 0; pointer-events: none; transform: translateX(-50%);
+    background: var(--card-2); border: 1px solid var(--line); border-radius: 8px;
+    padding: 4px 8px; font-size: 12px; white-space: nowrap; display: none;
+  }
+  .tip b { display: block; font-size: 13px; color: var(--text); }
+  .periods { display: flex; justify-content: center; margin-top: 10px; }
+  .empty { padding: 28px 0; text-align: center; color: var(--muted); font-size: 14px; }
+
+  /* positions */
+  .pos { padding: 12px 0; border-top: 1px solid var(--line); }
+  .pos:first-of-type { border-top: 0; padding-top: 0; }
+  .row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .coin { font-size: 17px; font-weight: 650; }
+  .badge { display: inline-block; font-size: 12px; font-weight: 600; padding: 1px 7px; border-radius: 6px; margin-left: 6px; vertical-align: 2px; }
+  .badge.long { background: var(--up-wash); color: var(--up); }
+  .badge.short { background: var(--down-wash); color: var(--down); }
+  .badge.lev { background: var(--card-2); color: var(--text-2); font-weight: 500; }
+  .pnl { font-size: 17px; font-weight: 650; }
+  .small { font-size: 13px; }
+  .facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 8px; }
+  .facts div { font-size: 12px; color: var(--muted); }
+  .facts b { display: block; font-size: 14px; font-weight: 500; color: var(--text); }
+  .facts .warn b { color: var(--warn); }
+  .facts .hint { display: block; font-size: 11px; color: var(--muted); }
+  .nowrap { white-space: nowrap; }
+
+  /* trades */
+  .trade { padding: 10px 0; border-top: 1px solid var(--line); }
+  .trade:first-of-type { border-top: 0; padding-top: 0; }
+  .trade .act { font-weight: 600; }
+
+  .err { margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: var(--down-wash); color: var(--down); font-size: 13px; display: none; }
+  .err .btn { display: inline-block; margin-top: 8px; padding: 6px 12px; border-radius: 8px; background: var(--accent); color: #fff; font-weight: 600; }
+  footer { text-align: center; font-size: 12px; color: var(--muted); margin-top: 18px; }
+  .skeleton { color: var(--muted); text-align: center; padding: 60px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="who">
+      <div class="name" id="name">載入中…</div>
+      <div class="sub" id="sub">Hyperliquid 永續合約</div>
+    </div>
+    <span class="pill" id="status"><span class="dot"></span><span id="statusText">連線中</span></span>
+    <button class="icon-btn" id="refreshBtn" aria-label="重新整理">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 4v5h-5"/></svg>
+    </button>
+  </header>
+
+  <div class="chips" id="chips" hidden></div>
+  <div class="err" id="err"></div>
+
+  <div id="content"><div class="skeleton">載入中…</div></div>
+
+  <footer>
+    資料來源：Hyperliquid 公開 API・持倉每 5 秒更新<br>
+    <a id="hyperbot" href="#">在 Hyperbot 查看 ↗</a>
+  </footer>
+</div>
+
+<script>
+// ======================= 設定（放到 GitHub Pages 時改這裡） =======================
+const CONFIG = {
+  // 直連模式要顯示的錢包（從電腦打開時，會自動改用 hl_monitor.py 裡的名單）
+  traders: [
+    { user: "0x5b5d51203a0f9079f8aeb098a6523a13f298c060", name: "" },
+    { user: "0x5f912dbde4530bc43f8322196db54592e3dd65aa", name: "" },
+    { user: "0x9c6a5b4662c722d2c47f43d6c9813cb080ffa4ed", name: "" },
+  ],
+  // 備用：電腦儀表板的網址。填 https 的 Tailscale 網址（https://電腦名稱.tailnet.ts.net）
+  // 直連失敗時會自動改用電腦；填 http 網址的話，只會顯示「打開電腦版」按鈕
+  computerUrl: "",
+  dexes: [""],        // 和 hl_monitor.py 的 DEXES 一樣
+  includeSpot: false, // 成交紀錄是否包含現貨
+  recentTrades: 30,
+};
+// ==================================================================================
+
+(() => {
+  const REFRESH_MS = 5000;
+  const STALE_MS = 15000;
+  const PERIODS = [["day", "24H"], ["week", "7D"], ["month", "30D"], ["allTime", "全部"]];
+  const METRICS = [["accountValueHistory", "帳戶價值"], ["pnlHistory", "累積損益"]];
+
+  const $ = (s) => document.querySelector(s);
+  const store = {
+    get(k, d) { try { return localStorage.getItem(k) ?? d; } catch { return d; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+  };
+
+  let traders = [];
+  let current = (new URLSearchParams(location.search).get("user") || "").toLowerCase();
+  let data = null, lastOk = 0, lastErr = "", timer = null, loading = false;
+  let period = store.get("hl.period", "day");
+  let metric = store.get("hl.metric", "accountValueHistory");
+  let sortKey = store.get("hl.sort", "value");
+
+  // ---------- formatting ----------
+  const num = (x) => { const v = parseFloat(x); return Number.isFinite(v) ? v : 0; };
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const shortAddr = (a) => a ? `${a.slice(0, 6)}…${a.slice(-4)}` : "";
+  function fmtUsd(x, sign = false) {
+    const v = num(x), a = Math.abs(v);
+    let b;
+    if (a >= 1e9) b = (a / 1e9).toFixed(2) + "B";
+    else if (a >= 1e6) b = (a / 1e6).toFixed(2) + "M";
+    else if (a >= 1e4) b = (a / 1e3).toFixed(1) + "K";
+    else b = a.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return (v < 0 ? "-" : sign && v > 0 ? "+" : "") + "$" + b;
+  }
+  const fmtUsdFull = (x) => "$" + Math.round(num(x)).toLocaleString("en-US");
+  function fmtPx(x) {
+    const v = num(x);
+    if (!v) return "0";
+    const d = Math.max(0, Math.min(10, 5 - Math.floor(Math.log10(Math.abs(v)))));
+    return v.toLocaleString("en-US", { maximumFractionDigits: d });
+  }
+  const fmtSz = (x) => Math.abs(num(x)).toLocaleString("en-US", { maximumFractionDigits: 8 });
+  const fmtPct = (frac) => { const v = num(frac) * 100; return (v > 0 ? "+" : "") + v.toFixed(2) + "%"; };
+  const cls = (v) => (v > 0 ? "up" : v < 0 ? "down" : "sec");
+  const arrow = (v) => (v > 0 ? "▲ " : v < 0 ? "▼ " : "");
+  function fmtTime(ms, withSec = true) {
+    const d = new Date(ms), now = new Date();
+    const hm = d.toLocaleTimeString("zh-TW", { hour12: false, hour: "2-digit", minute: "2-digit", second: withSec ? "2-digit" : undefined });
+    if (d.toDateString() === now.toDateString()) return hm;
+    return `${d.getMonth() + 1}/${d.getDate()} ${d.toLocaleTimeString("zh-TW", { hour12: false, hour: "2-digit", minute: "2-digit" })}`;
+  }
+
+  // ---------- data sources ----------
+  const HL_INFO = "https://api.hyperliquid.xyz/info";
+  const PREFERRED_RETRY_MS = 60000;
+  let sources = [], active = 0, lastPreferredTry = 0, computerLink = "";
+
+  async function fetchT(url, opts = {}, ms = 8000) {
+    const ctl = new AbortController();
+    const t = setTimeout(() => ctl.abort(), ms);
+    try { return await fetch(url, { ...opts, signal: ctl.signal, cache: "no-store" }); }
+    catch (e) { throw new Error(e.name === "AbortError" ? "逾時" : "連線失敗"); }
+    finally { clearTimeout(t); }
+  }
+
+  async function hl(body) {
+    const r = await fetchT(HL_INFO, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    if (!r.ok) throw new Error("Hyperliquid 回應 " + r.status);
+    return r.json();
+  }
+
+  const dcache = {};
+  async function cachedDirect(key, ttl, fn) {
+    const c = dcache[key];
+    if (c && Date.now() - c.t < ttl) return c.v;
+    try {
+      const v = await fn();
+      dcache[key] = { t: Date.now(), v };
+      return v;
+    } catch (e) {
+      if (c) return c.v; // 暫時失敗就沿用上一次的資料
+      throw e;
+    }
+  }
+
+  const SPOT_DIRS = new Set(["Buy", "Sell", "Spot Dust Conversion"]);
+  const isSpot = (f) => SPOT_DIRS.has(f.dir) || String(f.coin || "").startsWith("@") || String(f.coin || "").includes("/");
+  const r8 = (v) => Math.round(v * 1e8) / 1e8;
+  function classify(start, end, spot) {
+    if (spot) return end > start ? ["🟢", "現貨買入"] : ["🔴", "現貨賣出"];
+    if (start === 0 && end === 0) return ["⚡", "快進快出"];
+    if (start === end) return ["🔁", "倉位調整"];
+    if (start === 0) return end > 0 ? ["🟢", "開多"] : ["🔴", "開空"];
+    if (end === 0) return ["⚪", start > 0 ? "平多" : "平空"];
+    if ((start > 0) !== (end > 0)) return ["🔄", end > 0 ? "反手做多" : "反手做空"];
+    if (Math.abs(end) > Math.abs(start)) return end > 0 ? ["🟢", "加多"] : ["🔴", "加空"];
+    return ["🟠", end > 0 ? "減多" : "減空"];
+  }
+  function groupTrades(user, fills) {
+    const groups = new Map();
+    for (const f of fills) {
+      if (isSpot(f) && !CONFIG.includeSpot) continue;
+      const k = f.coin + "|" + f.oid;
+      if (!groups.has(k)) groups.set(k, []);
+      groups.get(k).push(f);
+    }
+    const out = [];
+    for (const fs of groups.values()) {
+      fs.sort((a, b) => (a.time - b.time) || (a.tid - b.tid));
+      const start = r8(num(fs[0].startPosition));
+      let pos = start, sz = 0, ntl = 0, closed = 0, fee = 0, liq = false;
+      for (const f of fs) {
+        const s = num(f.sz), px = num(f.px);
+        pos += f.side === "B" ? s : -s;
+        sz += s; ntl += s * px; closed += num(f.closedPnl); fee += num(f.fee);
+        const L = f.liquidation;
+        if (L && String(L.liquidatedUser || user).toLowerCase() === user) liq = true;
+      }
+      const end = r8(pos);
+      let [icon, action] = classify(start, end, isSpot(fs[0]));
+      if (liq) { icon = "💥"; action = "被爆倉・" + action; }
+      out.push({ time: fs[fs.length - 1].time, coin: fs[0].coin, icon, action, start, end,
+        avgPx: sz ? ntl / sz : 0, notional: ntl, closedPnl: closed, fee, n: fs.length, liquidated: liq });
+    }
+    out.sort((a, b) => b.time - a.time);
+    return out.slice(0, CONFIG.recentTrades);
+  }
+
+  const directSource = {
+    id: "direct", label: "直連",
+    async load(user) {
+      const states = await Promise.all(CONFIG.dexes.map((dex) =>
+        hl(dex ? { type: "clearinghouseState", user, dex } : { type: "clearinghouseState", user })));
+      let av = 0; const positions = [];
+      for (const st of states) {
+        av += num(st && st.marginSummary && st.marginSummary.accountValue);
+        for (const ap of (st && st.assetPositions) || []) { const p = ap.position || {}; if (num(p.szi)) positions.push(p); }
+      }
+      const errors = [];
+      let trades = [], portfolio = null;
+      try { trades = groupTrades(user, (await cachedDirect("fills:" + user, 30000, () => hl({ type: "userFills", user }))) || []); }
+      catch (e) { errors.push("成交：" + e.message); }
+      try { portfolio = await cachedDirect("pf:" + user, 60000, () => hl({ type: "portfolio", user })); }
+      catch (e) { errors.push("走勢：" + e.message); }
+      const t = traders.find((x) => x.user === user);
+      return { user, name: t ? t.name : "", accountValue: String(av), positions, trades, portfolio, errors, updated: Date.now() };
+    },
+  };
+
+  function computerSource(base) {
+    return {
+      id: "computer", label: "電腦",
+      async load(user) {
+        const r = await fetchT(base + "/api/state?user=" + encodeURIComponent(user));
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(d.error || "電腦回應 " + r.status);
+        if (!d.positions) throw new Error((d.errors || []).join("；") || "沒有資料");
+        return d;
+      },
+    };
+  }
+
+  async function probeComputer(base) {
+    try {
+      const r = await fetchT(base + "/api/traders", {}, 4000);
+      if (!r.ok) return null;
+      const list = await r.json();
+      return Array.isArray(list) ? list : null;
+    } catch { return null; }
+  }
+
+  async function setupSources() {
+    const onComputer = location.protocol.startsWith("http") ? await probeComputer("") : null;
+    if (onComputer) {
+      // 從電腦打開：以電腦為主，電腦查不到時改用直連
+      traders = onComputer;
+      sources = [computerSource(""), directSource];
+    } else {
+      traders = CONFIG.traders.map((t) => ({ user: t.user.toLowerCase(), name: t.name || "" }));
+      sources = [directSource];
+      const base = (CONFIG.computerUrl || "").trim().replace(/\/+$/, "");
+      if (base) {
+        const blocked = location.protocol === "https:" && base.startsWith("http:");
+        if (!blocked) sources.push(computerSource(base));
+        computerLink = base;
+      }
+    }
+    // 網址帶了 ?user= 但不在名單裡：直連模式可以直接看任何地址
+    if (current && /^0x[0-9a-f]{40}$/.test(current) && !traders.some((t) => t.user === current) && sources.includes(directSource)) {
+      traders.push({ user: current, name: "" });
+    }
+    if (!traders.some((t) => t.user === current)) current = traders[0] ? traders[0].user : "";
+    renderChips();
+  }
+
+  async function fetchData(user) {
+    if (active !== 0 && Date.now() - lastPreferredTry > PREFERRED_RETRY_MS) {
+      lastPreferredTry = Date.now();
+      active = 0; // 隔一段時間試回主要來源
+    }
+    const errs = [];
+    for (let k = 0; k < sources.length; k++) {
+      const i = (active + k) % sources.length;
+      try {
+        const d = await sources[i].load(user);
+        if (i !== active) { active = i; lastPreferredTry = Date.now(); }
+        return d;
+      } catch (e) {
+        errs.push(`${sources[i].label}：${e.message || e}`);
+      }
+    }
+    throw new Error(errs.join("；"));
+  }
+
+  async function refresh() {
+    if (loading || !current) return;
+    loading = true;
+    $("#refreshBtn").classList.add("spin");
+    try {
+      data = await fetchData(current);
+      lastOk = Date.now(); lastErr = "";
+      render();
+    } catch (e) {
+      lastErr = e.message || String(e);
+    } finally {
+      loading = false;
+      $("#refreshBtn").classList.remove("spin");
+      renderStatus();
+    }
+  }
+
+  function schedule() {
+    clearTimeout(timer);
+    timer = setTimeout(async () => {
+      if (document.visibilityState === "visible") await refresh();
+      schedule();
+    }, REFRESH_MS);
+  }
+
+  // ---------- render ----------
+  function renderStatus() {
+    const pill = $("#status"), txt = $("#statusText");
+    const fresh = lastOk && Date.now() - lastOk < STALE_MS;
+    const src = sources[active] ? sources[active].label : "";
+    pill.className = "pill " + (fresh ? "live" : lastOk ? "stale" : "");
+    txt.textContent = fresh ? `即時・${src} ${fmtTime(lastOk)}` : lastOk ? "連線中斷・" + fmtTime(lastOk) : lastErr ? "無法連線" : "連線中";
+    const err = $("#err");
+    if (!lastErr) { err.style.display = "none"; return; }
+    const onlyComputer = sources.length && sources[0].id === "computer";
+    let hint = onlyComputer
+      ? "請確認電腦上的 hl_monitor.py 還開著，手機和電腦在同一個網路。"
+      : "請確認手機有網路。";
+    err.innerHTML = `抓不到資料（${esc(lastErr)}）。${hint}` +
+      (computerLink ? `<br><a class="btn" href="${esc(computerLink)}/?user=${esc(current)}">打開電腦版</a>` : "");
+    err.style.display = "block";
+  }
+
+  function renderChips() {
+    const box = $("#chips");
+    box.hidden = traders.length < 2;
+    box.innerHTML = traders.map((t) =>
+      `<button class="chip" data-user="${esc(t.user)}" aria-pressed="${t.user === current}">${esc(t.name || shortAddr(t.user))}</button>`
+    ).join("");
+  }
+
+  function render() {
+    const d = data;
+    const positions = d.positions || [];
+    const av = num(d.accountValue);
+    let upnl = 0, ntl = 0, longN = 0, shortN = 0, margin = 0;
+    for (const p of positions) {
+      const v = num(p.positionValue);
+      upnl += num(p.unrealizedPnl); ntl += v; margin += num(p.marginUsed);
+      if (num(p.szi) > 0) longN += v; else shortN += v;
+    }
+    const lev = av > 0 ? ntl / av : 0;
+    const longPct = ntl > 0 ? (longN / ntl) * 100 : 0;
+    const upnlPct = av - upnl > 0 ? upnl / (av - upnl) : 0;
+
+    const hasNick = d.name && d.name !== shortAddr(d.user);
+    $("#name").textContent = hasNick ? d.name : shortAddr(d.user);
+    $("#sub").textContent = (hasNick ? shortAddr(d.user) + "・" : "") + "Hyperliquid 永續合約";
+    $("#hyperbot").href = "https://www.hyperbot.network/trader/" + d.user;
+    document.title = (d.name || shortAddr(d.user)) + "・Hyperliquid 持倉";
+
+    const html = [];
+    // summary
+    html.push(`<section class="card">
+      <div class="label">帳戶價值</div>
+      <div class="hero">${fmtUsdFull(av)}</div>
+      <div class="hero-sub ${cls(upnl)}">${arrow(upnl)}未實現 ${fmtUsd(upnl, true)}<span class="muted">（${fmtPct(upnlPct)}）</span></div>
+      <div class="tiles">
+        <div class="tile"><div class="label">總倉位</div><div class="v num">${fmtUsd(ntl)}</div></div>
+        <div class="tile"><div class="label">有效槓桿</div><div class="v num">${lev.toFixed(2)}x</div></div>
+        <div class="tile"><div class="label">持倉數</div><div class="v num">${positions.length}</div></div>
+      </div>
+      ${ntl > 0 ? `<div class="ls">
+        <div class="ls-bar" role="img" aria-label="多單 ${longPct.toFixed(0)}%，空單 ${(100 - longPct).toFixed(0)}%">
+          ${longN > 0 ? `<span class="l" style="width:${longPct}%"></span>` : ""}
+          ${shortN > 0 ? `<span class="s" style="width:${100 - longPct}%"></span>` : ""}
+        </div>
+        <div class="ls-legend">
+          <span><span class="key" style="background:var(--up)"></span>多 ${fmtUsd(longN)}・${longPct.toFixed(0)}%</span>
+          <span><span class="key" style="background:var(--down)"></span>空 ${fmtUsd(shortN)}・${(100 - longPct).toFixed(0)}%</span>
+        </div>
+      </div>` : ""}
+    </section>`);
+
+    // chart
+    html.push(`<section class="card" id="chartCard">
+      <div class="card-head">
+        <div class="seg" id="metricSeg">${METRICS.map(([k, l]) => `<button data-metric="${k}" aria-pressed="${k === metric}">${l}</button>`).join("")}</div>
+      </div>
+      <div class="chart-meta"><span class="big num" id="chartValue"></span><span class="small" id="chartChange"></span></div>
+      <div class="chart-box" id="chartBox"><svg id="chart" aria-hidden="true"></svg><div class="tip" id="tip"></div></div>
+      <div class="periods"><div class="seg" id="periodSeg">${PERIODS.map(([k, l]) => `<button data-period="${k}" aria-pressed="${k === period}">${l}</button>`).join("")}</div></div>
+    </section>`);
+
+    // positions
+    const sorted = positions.slice().sort((a, b) =>
+      sortKey === "pnl" ? num(b.unrealizedPnl) - num(a.unrealizedPnl)
+      : sortKey === "coin" ? String(a.coin).localeCompare(String(b.coin))
+      : num(b.positionValue) - num(a.positionValue));
+    html.push(`<section class="card">
+      <div class="card-head"><h2>持倉（${positions.length}）</h2>
+        <div class="seg" id="sortSeg">
+          ${[["value", "價值"], ["pnl", "損益"], ["coin", "幣種"]].map(([k, l]) => `<button data-sort="${k}" aria-pressed="${k === sortKey}">${l}</button>`).join("")}
+        </div>
+      </div>
+      ${sorted.length ? sorted.map(posRow).join("") : `<div class="empty">目前沒有持倉</div>`}
+    </section>`);
+
+    // trades
+    const trades = d.trades || [];
+    html.push(`<section class="card">
+      <div class="card-head"><h2>最近成交</h2><span class="small muted">同一張訂單已合併</span></div>
+      ${trades.length ? trades.map(tradeRow).join("") : `<div class="empty">沒有成交紀錄</div>`}
+    </section>`);
+
+    $("#content").innerHTML = html.join("");
+    drawChart();
+  }
+
+  function posRow(p) {
+    const szi = num(p.szi), isLong = szi > 0;
+    const value = num(p.positionValue), upnl = num(p.unrealizedPnl);
+    const mark = Math.abs(szi) > 0 ? value / Math.abs(szi) : 0;
+    const lev = p.leverage || {};
+    const liq = p.liquidationPx ? num(p.liquidationPx) : 0;
+    const dist = liq && mark ? Math.abs(mark - liq) / mark : null;
+    const near = dist !== null && dist < 0.1;
+    return `<div class="pos">
+      <div class="row">
+        <div><span class="coin">${esc(p.coin)}</span><span class="badge ${isLong ? "long" : "short"}">${isLong ? "多" : "空"}</span><span class="badge lev">${esc(lev.value ?? "?")}x ${lev.type === "cross" ? "全倉" : "逐倉"}</span></div>
+        <div class="pnl num ${cls(upnl)}">${fmtUsd(upnl, true)}</div>
+      </div>
+      <div class="row small">
+        <div class="sec num">${fmtSz(szi)}・${fmtUsd(value)}</div>
+        <div class="num ${cls(upnl)}">ROE ${fmtPct(p.returnOnEquity)}</div>
+      </div>
+      <div class="facts num">
+        <div>開倉價<b>${fmtPx(p.entryPx)}</b></div>
+        <div>標記價<b>${fmtPx(mark)}</b></div>
+        <div class="${near ? "warn" : ""}">爆倉價${near ? " ⚠" : ""}<b>${liq ? fmtPx(liq) : "—"}</b>${dist !== null ? `<span class="hint">距離 ${(dist * 100).toFixed(1)}%</span>` : ""}</div>
+      </div>
+    </div>`;
+  }
+
+  function tradeRow(t) {
+    const delta = num(t.end) - num(t.start);
+    const pnl = num(t.closedPnl);
+    return `<div class="trade">
+      <div class="row"><div class="act">${t.icon} ${esc(t.action)} ${esc(t.coin)}</div>${pnl ? `<div class="small num nowrap ${cls(pnl)}">已實現 ${fmtUsd(pnl, true)}</div>` : ""}</div>
+      <div class="row small">
+        <div class="sec num">${delta > 0 ? "+" : delta < 0 ? "-" : ""}${fmtSz(delta)} @ ${fmtPx(t.avgPx)}・${fmtUsd(t.notional)}${t.n > 1 ? `・${t.n} 筆` : ""}</div>
+        <div class="muted num nowrap">${fmtTime(t.time)}</div>
+      </div>
+    </div>`;
+  }
+
+  // ---------- chart ----------
+  function periodSeries() {
+    const pf = data && data.portfolio;
+    let map = {};
+    if (Array.isArray(pf)) { for (const e of pf) if (Array.isArray(e) && e.length === 2) map[e[0]] = e[1]; }
+    else if (pf && typeof pf === "object") map = pf;
+    const pd = map[period];
+    const raw = pd && Array.isArray(pd[metric]) ? pd[metric] : [];
+    return raw.map((p) => [Number(p[0]), num(p[1])]).filter((p) => Number.isFinite(p[0])).sort((a, b) => a[0] - b[0]);
+  }
+
+  function drawChart() {
+    const svg = $("#chart"), box = $("#chartBox"), tip = $("#tip");
+    if (!svg) return;
+    const pts = periodSeries();
+    const isPnl = metric === "pnlHistory";
+    if (pts.length < 2) {
+      svg.style.display = "none";
+      if (!box.querySelector(".empty")) box.insertAdjacentHTML("beforeend", `<div class="empty">這個區間沒有歷史資料</div>`);
+      $("#chartValue").textContent = ""; $("#chartChange").textContent = "";
+      return;
+    }
+    const first = pts[0][1], last = pts[pts.length - 1][1];
+    const change = last - first;
+    $("#chartValue").textContent = isPnl ? fmtUsd(change, true) : fmtUsd(last);
+    $("#chartValue").className = "big num " + (isPnl ? cls(change) : "");
+    const label = PERIODS.find((p) => p[0] === period)[1];
+    $("#chartChange").innerHTML = isPnl
+      ? `<span class="muted">${label} 期間損益</span>`
+      : `<span class="${cls(change)}">${arrow(change)}${fmtUsd(change, true)}${first ? `（${fmtPct(change / Math.abs(first))}）` : ""}</span> <span class="muted">${label}</span>`;
+
+    const W = Math.max(280, box.clientWidth), H = 180;
+    const padL = 4, padR = 54, padT = 10, padB = 22;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    const t0 = pts[0][0], t1 = pts[pts.length - 1][0];
+    let lo = Math.min(...pts.map((p) => p[1])), hi = Math.max(...pts.map((p) => p[1]));
+    if (isPnl) { lo = Math.min(lo, 0); hi = Math.max(hi, 0); }
+    if (hi === lo) { hi += Math.abs(hi) * 0.01 || 1; lo -= Math.abs(lo) * 0.01 || 1; }
+    const span = hi - lo; hi += span * 0.08; lo -= span * 0.08;
+    const x = (t) => padL + ((t - t0) / (t1 - t0 || 1)) * (W - padL - padR);
+    const y = (v) => padT + (1 - (v - lo) / (hi - lo)) * (H - padT - padB);
+
+    const ticks = [lo + (hi - lo) * 0.15, lo + (hi - lo) * 0.5, lo + (hi - lo) * 0.85];
+    const line = pts.map((p, i) => `${i ? "L" : "M"}${x(p[0]).toFixed(1)},${y(p[1]).toFixed(1)}`).join("");
+    const base = isPnl ? y(0) : H - padB;
+    const area = `${line}L${x(t1).toFixed(1)},${base.toFixed(1)}L${x(t0).toFixed(1)},${base.toFixed(1)}Z`;
+    const tf = (t) => {
+      const d = new Date(t);
+      return period === "day" ? `${d.getMonth() + 1}/${d.getDate()} ` + d.toLocaleTimeString("zh-TW", { hour12: false, hour: "2-digit", minute: "2-digit" })
+        : period === "allTime" ? `${d.getFullYear()}/${d.getMonth() + 1}` : `${d.getMonth() + 1}/${d.getDate()}`;
+    };
+
+    svg.style.display = "block";
+    svg.innerHTML = `
+      ${ticks.map((v) => `<line x1="${padL}" x2="${W - padR}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/>
+        <text x="${W - padR + 6}" y="${y(v) + 4}" font-size="11" fill="var(--muted)">${fmtUsd(v)}</text>`).join("")}
+      ${isPnl ? `<line x1="${padL}" x2="${W - padR}" y1="${y(0)}" y2="${y(0)}" stroke="var(--muted)" stroke-width="1"/>` : ""}
+      <path d="${area}" fill="var(--accent-wash)"/>
+      <path d="${line}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle cx="${x(t1)}" cy="${y(last)}" r="4" fill="var(--accent)" stroke="var(--card)" stroke-width="2"/>
+      <text x="${padL}" y="${H - 6}" font-size="11" fill="var(--muted)">${tf(t0)}</text>
+      <text x="${W - padR}" y="${H - 6}" font-size="11" fill="var(--muted)" text-anchor="end">${tf(t1)}</text>
+      <g id="cross" style="display:none">
+        <line id="cx" y1="${padT}" y2="${H - padB}" stroke="var(--muted)" stroke-width="1"/>
+        <circle id="cd" r="4" fill="var(--accent)" stroke="var(--card)" stroke-width="2"/>
+      </g>
+      <rect x="0" y="0" width="${W}" height="${H}" fill="transparent" id="hit"/>`;
+
+    const cross = svg.querySelector("#cross"), cx = svg.querySelector("#cx"), cd = svg.querySelector("#cd");
+    const show = (ev) => {
+      const r = svg.getBoundingClientRect();
+      const px = ((ev.clientX - r.left) / r.width) * W;
+      let best = 0, bd = Infinity;
+      for (let i = 0; i < pts.length; i++) { const dd = Math.abs(x(pts[i][0]) - px); if (dd < bd) { bd = dd; best = i; } }
+      const [t, v] = pts[best];
+      const X = x(t), Y = y(v);
+      cross.style.display = "";
+      cx.setAttribute("x1", X); cx.setAttribute("x2", X);
+      cd.setAttribute("cx", X); cd.setAttribute("cy", Y);
+      tip.innerHTML = `<b class="num">${fmtUsd(v, isPnl)}</b>${new Date(t).toLocaleString("zh-TW", { hour12: false, month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}`;
+      tip.style.display = "block";
+      const half = tip.offsetWidth / 2;
+      tip.style.left = Math.min(Math.max((X / W) * r.width, half), r.width - half) + "px";
+    };
+    const hide = () => { cross.style.display = "none"; tip.style.display = "none"; };
+    const hit = svg.querySelector("#hit");
+    hit.addEventListener("pointermove", show);
+    hit.addEventListener("pointerdown", show);
+    hit.addEventListener("pointerleave", hide);
+    hit.addEventListener("pointercancel", hide);
+  }
+
+  // ---------- events ----------
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (!b) return;
+    if (b.id === "refreshBtn") return refresh();
+    if (b.dataset.metric) { metric = b.dataset.metric; store.set("hl.metric", metric); return render(); }
+    if (b.dataset.period) { period = b.dataset.period; store.set("hl.period", period); return render(); }
+    if (b.dataset.sort) { sortKey = b.dataset.sort; store.set("hl.sort", sortKey); return render(); }
+    if (b.dataset.user) {
+      current = b.dataset.user; data = null;
+      try { history.replaceState(null, "", "?user=" + current); } catch {}
+      renderChips();
+      $("#content").innerHTML = `<div class="skeleton">載入中…</div>`;
+      return refresh();
+    }
+  });
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") refresh(); });
+  let rz;
+  window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => data && drawChart(), 150); });
+  setInterval(renderStatus, 1000);
+
+  (async () => {
+    await setupSources();
+    if (!current) { lastErr = "沒有設定要監控的錢包"; renderStatus(); return; }
+    await refresh();
+    schedule();
+  })();
+})();
+</script>
+</body>
+</html>
