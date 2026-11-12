@@ -185,6 +185,11 @@
   <div class="chips" id="chips" hidden></div>
   <div class="err" id="err"></div>
 
+  <section class="card" aria-label="地址分析" style="padding:14px;margin:12px 0">
+    <strong>地址持倉分析</strong>
+    <div class="small muted" id="analysis-time"></div>
+    <div id="analysis-text" style="white-space:pre-line;margin-top:8px;line-height:1.6">載入中…</div>
+  </section>
   <div id="content"><div class="skeleton">載入中…</div></div>
 
   <footer>
@@ -496,7 +501,26 @@ const CONFIG = {
     err.style.display = "block";
   }
 
+  let analyses = {};
+  let analysisError = false;
+  function showAnalysis() {
+    const entry = analyses[current.toLowerCase()];
+    const stamp = value => new Date(value).toLocaleString("zh-TW", {timeZone:"Asia/Taipei",hour12:false});
+    $("#analysis-time").textContent = entry ? stamp(entry.from) + " 至 " + stamp(entry.updatedAt) + "（台灣時間）" : "";
+    $("#analysis-text").textContent = entry ? entry.report + (analysisError ? "\n更新失敗，顯示上次資料。" : "") : analysisError ? "分析暫時無法載入。" : "此地址尚無已發布分析。";
+  }
+  async function loadAnalysis() {
+    try {
+      const response = await fetch("./analysis/latest.json", {cache:"no-store"});
+      if (!response.ok) throw Error(response.status);
+      analyses = await response.json();
+      analysisError = false;
+    } catch { analysisError = true; }
+    showAnalysis();
+  }
+
   function renderChips() {
+    showAnalysis();
     const box = $("#chips");
     box.hidden = traders.length < 2;
     box.innerHTML = traders.map((t) =>
@@ -730,6 +754,8 @@ const CONFIG = {
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") refresh(); });
   let rz;
   window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => data && drawChart(), 150); });
+  loadAnalysis();
+  setInterval(loadAnalysis, 300000);
   setInterval(renderStatus, 1000);
 
   (async () => {
