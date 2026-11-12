@@ -1,0 +1,42 @@
+name: Daily whale dashboard
+on:
+  schedule:
+    - cron: '0 1 * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/daily-analysis.yml'
+concurrency:
+  group: daily-whale-dashboard
+  cancel-in-progress: false
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Fetch positions and save reports
+        run: |
+          node scripts/daily-analysis.mjs
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add analysis/latest.json
+          git commit -m "Publish daily whale positions"
+          git push origin HEAD:main
+      - name: Prepare dashboard
+        run: |
+          mkdir -p _site/analysis
+          cp index.html _site/
+          cp analysis/latest.json _site/analysis/
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - uses: actions/deploy-pages@v4
