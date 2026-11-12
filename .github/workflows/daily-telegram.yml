@@ -26,7 +26,7 @@ jobs:
           const reports = JSON.parse(fs.readFileSync('analysis/latest.json','utf8'));
           const time = value => new Date(value).toLocaleString('zh-TW',{timeZone:'Asia/Taipei'});
           for (const [address, entry] of Object.entries(reports)) {
-            const text = ['巨鯨每日持倉分析',address,time(entry.from)+' 至 '+time(entry.updatedAt)+' 台灣時間',entry.report].join('\n');
+            const text = [(entry.name || address)+'｜每日持倉分析',time(entry.updatedAt)+' 台灣時間',entry.report].join('\n');
             const response = await fetch('https://api.telegram.org/bot'+token+'/sendMessage',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({chat_id:chat,text})});
             const result = await response.json();
             if (!response.ok || !result.result?.message_id) throw Error('Telegram delivery failed: '+response.status);
