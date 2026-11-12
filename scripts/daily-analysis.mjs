@@ -16,12 +16,15 @@ const day = 86400000;
 const now = Date.now();
 const today = Math.floor(now/day)*day;
 async function info(body) {
+  for(let attempt=0;attempt<4;attempt++) {
   const response = await fetch('https://api.hyperliquid.xyz/info', {
     method:'POST', headers:{'content-type':'application/json'},
     body:JSON.stringify(body), signal:AbortSignal.timeout(20000)
   });
+  if (response.status===429 && attempt<3) { await new Promise(resolve=>setTimeout(resolve,Math.max(Number(response.headers.get('Retry-After'))||0,8*2**attempt)*1000)); continue; }
   if (!response.ok) throw Error('Hyperliquid HTTP '+response.status);
   return response.json();
+  }
 }
 function describe(before, qty) {
   const side = qty > 0 ? '多單' : '空單';
@@ -80,12 +83,19 @@ for (const [user,name,focus] of traders) {
   history.snapshots[user]=snapshots.filter(s=>s.t>=now-366*day);
   const retained=(history.events[user]??[]).filter(e=>e.t>=today-365*day);
   const events=new Map(retained.map(e=>[e.t+'/'+e.i,e]));
-  const fresh=await dailyTrades(info,user,coins,now);
+  let fresh=[], gap='';
+  try {
+    const since=retained.length?Math.max(today-30*day,Math.max(...retained.map(e=>e.t))-day):today-30*day;
+    fresh=await dailyTrades(info,user,coins,now,since);
+  } catch(error) {
+    console.warn('Fill history unavailable',user,error.message);
+    gap='\n本期成交查詢未完成，成交區間及樣本只列已保存紀錄。';
+  }
   for(const e of fresh) if(e.t<today)events.set(e.t+'/'+e.i,e);
   history.events[user]=[...events.values()];
   const text=review(history.snapshots[user],history.events[user],focus,contexts[focus].candles,now);
   const goldChange=previous?.quantities ? quantities[2]-previous.quantities[2] : null;
-  feed[user] = {goldChange,name,from:previous?.updatedAt??updatedAt,updatedAt,quantities,report:report+'\n\n'+text};
+  feed[user] = {goldChange,name,from:previous?.updatedAt??updatedAt,updatedAt,quantities,report:report+'\n\n'+text+gap};
 }
 const comparison=goldComparison(feed,traders[0][0],traders[2][0]);
 for(const i of [0,2])feed[traders[i][0]].report+='\n\n'+comparison;
