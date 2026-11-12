@@ -101,7 +101,8 @@
 
   .card { background: var(--card); border-radius: 16px; padding: 16px; margin-top: 12px; }
   .card h2 { font-size: 15px; margin: 0; font-weight: 650; }
-  .card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+  .card-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+  .card-head h2 { white-space: nowrap; }
 
   /* hero */
   .label { font-size: 13px; color: var(--muted); }
@@ -121,7 +122,7 @@
   /* segmented controls */
   .seg { display: inline-flex; background: var(--card-2); border-radius: 10px; padding: 2px; }
   .seg button {
-    border: 0; background: transparent; padding: 5px 10px; border-radius: 8px;
+    border: 0; background: transparent; padding: 5px 10px; border-radius: 8px; white-space: nowrap;
     font-size: 13px; color: var(--text-2); cursor: pointer;
   }
   .seg button[aria-pressed="true"] { background: var(--card); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.25); }
@@ -156,6 +157,8 @@
   .facts b { display: block; font-size: 14px; font-weight: 500; color: var(--text); }
   .facts .warn b { color: var(--warn); }
   .facts .hint { display: block; font-size: 11px; color: var(--muted); }
+  .recent-chip { margin-top: 10px; padding: 6px 10px; border-radius: 8px; background: var(--accent-wash); color: var(--text); font-size: 13px; }
+  .dotn { display: inline-block; min-width: 16px; padding: 0 4px; border-radius: 8px; background: var(--accent); color: #fff; font-size: 11px; line-height: 16px; text-align: center; }
   .nowrap { white-space: nowrap; }
 
   /* trades */
@@ -185,11 +188,6 @@
   <div class="chips" id="chips" hidden></div>
   <div class="err" id="err"></div>
 
-  <section class="card" aria-label="地址分析" style="padding:14px;margin:12px 0">
-    <strong>地址持倉分析</strong>
-    <div class="small muted" id="analysis-time"></div>
-    <div id="analysis-text" style="white-space:pre-line;margin-top:8px;line-height:1.6">載入中…</div>
-  </section>
   <div id="content"><div class="skeleton">載入中…</div></div>
 
   <footer>
@@ -213,6 +211,7 @@ const CONFIG = {
   dexes: "auto",      // "auto" = 自動包含黃金、股票等 HIP-3 市場；也可以手動指定，例如 ["", "xyz"]
   includeSpot: false, // 成交紀錄是否包含現貨
   recentTrades: 30,
+  recentMinutes: 30,  // 「近 30 分」分頁統計最近幾分鐘的操作
 };
 // ==================================================================================
 
@@ -229,6 +228,7 @@ const CONFIG = {
   };
 
   let traders = [];
+  let recentByCoin = new Map();
   let current = (new URLSearchParams(location.search).get("user") || "").toLowerCase();
   let data = null, lastOk = 0, lastErr = "", timer = null, loading = false;
   let period = store.get("hl.period", "day");
@@ -342,6 +342,40 @@ const CONFIG = {
     return out.slice(0, CONFIG.recentTrades);
   }
 
+  // 最近 N 分鐘每個幣種的淨操作（例如 加空 120 BTC），已經平掉的倉位也會列出
+  const RECENT_MIN = CONFIG.recentMinutes || 30;
+  function recentOps(user, fills) {
+    const since = Date.now() - RECENT_MIN * 60000;
+    const byCoin = new Map();
+    for (const f of fills || []) {
+      if (num(f.time) < since) continue;
+      if (isSpot(f) && !CONFIG.includeSpot) continue;
+      if (!byCoin.has(f.coin)) byCoin.set(f.coin, []);
+      byCoin.get(f.coin).push(f);
+    }
+    const out = [];
+    for (const [coin, fs] of byCoin) {
+      fs.sort((a, b) => (a.time - b.time) || (a.tid - b.tid));
+      const start = r8(num(fs[0].startPosition));
+      let pos = start, buy = 0, sell = 0, ntl = 0, closed = 0, fee = 0, liq = false;
+      for (const f of fs) {
+        const s = num(f.sz), px = num(f.px);
+        if (f.side === "B") { pos += s; buy += s; } else { pos -= s; sell += s; }
+        ntl += s * px; closed += num(f.closedPnl); fee += num(f.fee);
+        const L = f.liquidation;
+        if (L && String(L.liquidatedUser || user).toLowerCase() === user) liq = true;
+      }
+      const end = r8(pos), sz = buy + sell;
+      let [icon, action] = classify(start, end, isSpot(fs[0]));
+      if (liq) { icon = "💥"; action = "被爆倉・" + action; }
+      out.push({ coin, icon, action, start, end, delta: r8(end - start), buy: r8(buy), sell: r8(sell),
+        avgPx: sz ? ntl / sz : 0, notional: ntl, closedPnl: closed, fee, n: fs.length,
+        first: fs[0].time, last: fs[fs.length - 1].time });
+    }
+    out.sort((a, b) => b.last - a.last);
+    return out;
+  }
+
   const dexState = (user, dex) => hl(dex ? { type: "clearinghouseState", user, dex } : { type: "clearinghouseState", user });
   const hasActivity = (st) => !!st && (num(st.marginSummary && st.marginSummary.accountValue) !== 0 ||
     ((st.assetPositions || []).some((ap) => num((ap.position || {}).szi) !== 0)));
@@ -383,13 +417,16 @@ const CONFIG = {
         }
       });
       const errors = [];
-      let trades = [], portfolio = null;
-      try { trades = groupTrades(user, (await cachedDirect("fills:" + user, 30000, () => hl({ type: "userFills", user }))) || []); }
-      catch (e) { errors.push("成交：" + e.message); }
+      let trades = [], recent = [], portfolio = null;
+      try {
+        const fills = (await cachedDirect("fills:" + user, 15000, () => hl({ type: "userFills", user }))) || [];
+        trades = groupTrades(user, fills);
+        recent = recentOps(user, fills);
+      } catch (e) { errors.push("成交：" + e.message); }
       try { portfolio = await cachedDirect("pf:" + user, 60000, () => hl({ type: "portfolio", user })); }
       catch (e) { errors.push("走勢：" + e.message); }
       const t = traders.find((x) => x.user === user);
-      return { user, name: t ? t.name : "", accountValue: String(av), positions, trades, portfolio, errors, updated: Date.now() };
+      return { user, name: t ? t.name : "", accountValue: String(av), positions, trades, recent, portfolio, errors, updated: Date.now() };
     },
   };
 
@@ -401,6 +438,7 @@ const CONFIG = {
         const d = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(d.error || "電腦回應 " + r.status);
         if (!d.positions) throw new Error((d.errors || []).join("；") || "沒有資料");
+        d.recent = recentOps(user, d.recentFills || []);
         return d;
       },
     };
@@ -501,26 +539,7 @@ const CONFIG = {
     err.style.display = "block";
   }
 
-  let analyses = {};
-  let analysisError = false;
-  function showAnalysis() {
-    const entry = analyses[current.toLowerCase()];
-    const stamp = value => new Date(value).toLocaleString("zh-TW", {timeZone:"Asia/Taipei",hour12:false});
-    $("#analysis-time").textContent = entry ? stamp(entry.from) + " 至 " + stamp(entry.updatedAt) + "（台灣時間）" : "";
-    $("#analysis-text").textContent = entry ? entry.report + (analysisError ? "\n更新失敗，顯示上次資料。" : "") : analysisError ? "分析暫時無法載入。" : "此地址尚無已發布分析。";
-  }
-  async function loadAnalysis() {
-    try {
-      const response = await fetch("./analysis/latest.json", {cache:"no-store"});
-      if (!response.ok) throw Error(response.status);
-      analyses = await response.json();
-      analysisError = false;
-    } catch { analysisError = true; }
-    showAnalysis();
-  }
-
   function renderChips() {
-    showAnalysis();
     const box = $("#chips");
     box.hidden = traders.length < 2;
     box.innerHTML = traders.map((t) =>
@@ -581,18 +600,25 @@ const CONFIG = {
       <div class="periods"><div class="seg" id="periodSeg">${PERIODS.map(([k, l]) => `<button data-period="${k}" aria-pressed="${k === period}">${l}</button>`).join("")}</div></div>
     </section>`);
 
-    // positions
+    // positions + 近 N 分鐘操作
+    const recent = d.recent || [];
+    recentByCoin = new Map(recent.map((r) => [r.coin, r]));
+    const showRecent = sortKey === "recent";
     const sorted = positions.slice().sort((a, b) =>
       sortKey === "pnl" ? num(b.unrealizedPnl) - num(a.unrealizedPnl)
       : sortKey === "coin" ? String(a.coin).localeCompare(String(b.coin))
       : num(b.positionValue) - num(a.positionValue));
+    const tabs = [["value", "價值"], ["pnl", "損益"], ["coin", "幣種"], ["recent", `近${RECENT_MIN}分`]];
+    const body = showRecent
+      ? (recent.length ? recent.map(recentRow).join("") : `<div class="empty">最近 ${RECENT_MIN} 分鐘沒有操作</div>`)
+      : (sorted.length ? sorted.map(posRow).join("") : `<div class="empty">目前沒有持倉</div>`);
     html.push(`<section class="card">
-      <div class="card-head"><h2>持倉（${positions.length}）</h2>
+      <div class="card-head"><h2>${showRecent ? `近 ${RECENT_MIN} 分（${recent.length}）` : `持倉（${positions.length}）`}</h2>
         <div class="seg" id="sortSeg">
-          ${[["value", "價值"], ["pnl", "損益"], ["coin", "幣種"]].map(([k, l]) => `<button data-sort="${k}" aria-pressed="${k === sortKey}">${l}</button>`).join("")}
+          ${tabs.map(([k, l]) => `<button data-sort="${k}" aria-pressed="${k === sortKey}">${l}${k === "recent" && recent.length ? ` <span class="dotn">${recent.length}</span>` : ""}</button>`).join("")}
         </div>
       </div>
-      ${sorted.length ? sorted.map(posRow).join("") : `<div class="empty">目前沒有持倉</div>`}
+      ${body}
     </section>`);
 
     // trades
@@ -628,8 +654,35 @@ const CONFIG = {
         <div>標記價<b>${fmtPx(mark)}</b></div>
         <div class="${near ? "warn" : ""}">爆倉價${near ? " ⚠" : ""}<b>${liq ? fmtPx(liq) : "—"}</b>${dist !== null ? `<span class="hint">距離 ${(dist * 100).toFixed(1)}%</span>` : ""}</div>
       </div>
+      ${recentChip(recentByCoin.get(p.coin))}
     </div>`;
   }
+
+  function opAmount(r) {
+    // 淨變化為 0（來回交易）時，顯示買賣總量
+    return r.delta !== 0 ? `${fmtSz(r.delta)}（${fmtUsd(Math.abs(r.delta) * r.avgPx)}）` : `買 ${fmtSz(r.buy)}／賣 ${fmtSz(r.sell)}`;
+  }
+
+  function recentChip(r) {
+    if (!r) return "";
+    return `<div class="recent-chip num">${RECENT_MIN} 分內 ${r.icon} ${esc(r.action)} ${opAmount(r)}・${r.n} 筆</div>`;
+  }
+
+  function recentRow(r) {
+    const pnl = num(r.closedPnl);
+    const t1 = fmtTime(r.first, false), t2 = fmtTime(r.last, false);
+    const span = t1 === t2 ? t2 : `${t1}–${t2}`;
+    return `<div class="trade">
+      <div class="row"><div class="act">${r.icon} ${esc(r.action)} ${esc(r.coin)} <span class="num">${opAmount(r)}</span></div>${pnl ? `<div class="small num nowrap ${cls(pnl)}">已實現 ${fmtUsd(pnl, true)}</div>` : ""}</div>
+      <div class="row small">
+        <div class="sec num">均價 ${fmtPx(r.avgPx)}・成交 ${fmtUsd(r.notional)}・${r.n} 筆</div>
+        <div class="muted num nowrap">${span}</div>
+      </div>
+      <div class="small muted num">倉位 ${posWord(r.start)} → ${posWord(r.end)}</div>
+    </div>`;
+  }
+
+  const posWord = (v) => (v === 0 ? "0" : `${v > 0 ? "多" : "空"} ${fmtSz(v)}`);
 
   function tradeRow(t) {
     const delta = num(t.end) - num(t.start);
@@ -754,8 +807,6 @@ const CONFIG = {
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") refresh(); });
   let rz;
   window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => data && drawChart(), 150); });
-  loadAnalysis();
-  setInterval(loadAnalysis, 300000);
   setInterval(renderStatus, 1000);
 
   (async () => {
