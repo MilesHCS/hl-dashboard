@@ -23,6 +23,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: main
+      - name: Check report generator syntax
+        run: node --check scripts/daily-analysis.mjs
       - name: Fetch positions and save reports
         run: |
           node scripts/daily-analysis.mjs
