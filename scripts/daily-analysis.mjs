@@ -1,5 +1,8 @@
 import fs from 'node:fs/promises';
 
+import {dailyTrades,review,goldComparison} from './swing-context.mjs';
+const historyFile='analysis/observations.json';
+const history=JSON.parse(await fs.readFile(historyFile,'utf8'));
 const file = 'analysis/latest.json';
 const feed = JSON.parse(await fs.readFile(file, 'utf8'));
 const traders = [
@@ -36,14 +39,14 @@ for (const [i,coin] of coins.entries()) {
   const mids = await info({type:'allMids',dex});
   const price = Number(mids[coin]);
   if (!(price>0)) throw Error('Missing price for '+coin);
-  const candles = await info({type:'candleSnapshot',req:{coin,interval:'1d',startTime:today-30*day,endTime:now}});
+  const candles = await info({type:'candleSnapshot',req:{coin,interval:'1d',startTime:today-366*day,endTime:now}});
   const first = candles.find(c=>Number(c.t)===today-30*day);
   let month = '近一個月的起始價格資料不足。';
   if (Number(first?.o)>0) {
     const pct = (price/Number(first.o)-1)*100;
     month = '相較約 30 天前'+(pct>=0?'上漲':'下跌')+'約 '+Math.abs(pct).toFixed(1)+'%。';
   }
-  contexts.push({price,month});
+  contexts.push({price,month,candles});
 }
 for (const [user,name,focus] of traders) {
   const previous = feed[user];
@@ -72,6 +75,19 @@ for (const [user,name,focus] of traders) {
   const watch = q ? '接下來觀察'+label+'：如果價格'+(q>0?'回落':'反彈')+'時繼續加'+(q>0?'多':'空')+'，代表它在逆向波動中增加曝險；如果連續減倉，則顯示它正在收縮這個方向的部位。' : '接下來觀察是否重新開倉，以及新倉選擇的方向。';
   const report = label+' 合約中間價約 '+Math.round(price).toLocaleString('en-US')+' 美元，'+month+'\n\n'+changes.join('；')+'。'+interpretation+'\n\n'+watch;
   const updatedAt = new Date().toISOString();
-  feed[user] = {name,from:previous?.updatedAt??updatedAt,updatedAt,quantities,report};
+  const snapshots=history.snapshots[user]??[];
+  snapshots.push({t:now,q:quantities});
+  history.snapshots[user]=snapshots.filter(s=>s.t>=now-366*day);
+  const retained=(history.events[user]??[]).filter(e=>e.t>=today-365*day);
+  const events=new Map(retained.map(e=>[e.t+'/'+e.i,e]));
+  const fresh=await dailyTrades(info,user,coins,now);
+  for(const e of fresh) if(e.t<today)events.set(e.t+'/'+e.i,e);
+  history.events[user]=[...events.values()];
+  const text=review(history.snapshots[user],history.events[user],focus,contexts[focus].candles,now);
+  const goldChange=previous?.quantities ? quantities[2]-previous.quantities[2] : null;
+  feed[user] = {goldChange,name,from:previous?.updatedAt??updatedAt,updatedAt,quantities,report:report+'\n\n'+text};
 }
+const comparison=goldComparison(feed,traders[0][0],traders[2][0]);
+for(const i of [0,2])feed[traders[i][0]].report+='\n\n'+comparison;
+await fs.writeFile(historyFile,JSON.stringify(history)+'\n');
 await fs.writeFile(file,JSON.stringify(feed,null,2)+'\n');
