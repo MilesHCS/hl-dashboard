@@ -158,6 +158,7 @@
   .facts .warn b { color: var(--warn); }
   .facts .hint { display: block; font-size: 11px; color: var(--muted); }
   .recent-chip { margin-top: 10px; padding: 6px 10px; border-radius: 8px; background: var(--accent-wash); color: var(--text); font-size: 13px; }
+  #sortSeg { max-width:100%; flex-wrap:wrap; }
   .seg.wins { display: flex; margin-bottom: 12px; }
   .range { margin: -2px 0 12px; font-size: 13px; color: var(--text-2); display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
   .range span { color: var(--muted); font-size: 12px; }
@@ -237,6 +238,22 @@ const CONFIG = {
   let data = null, lastOk = 0, lastErr = "", timer = null, loading = false;
   let period = store.get("hl.period", "day");
   let metric = store.get("hl.metric", "accountValueHistory");
+  let reports = null, reportError = false;
+  async function loadReports() {
+    try {
+      const response = await fetch("./analysis/latest.json", {cache:"no-store"});
+      if (!response.ok) throw Error(response.status);
+      reports = await response.json();
+      reportError = false;
+    } catch { reportError = true; }
+    if (data && sortKey === "analysis") render();
+  }
+  function analysisPanel(user) {
+    const entry = reports?.[user.toLowerCase()];
+    if (!entry) return '<div class="empty">'+(reportError?'分析載入失敗，請重新整理。':reports?'此地址尚無日報。':'分析載入中…')+'</div>';
+    const time = new Date(entry.updatedAt).toLocaleString("zh-TW",{timeZone:"Asia/Taipei",hour12:false});
+    return '<div class="small muted">'+esc(entry.name)+' · '+esc(time)+' 台灣時間'+(reportError?' · 顯示上次資料':'')+'</div><div style="white-space:pre-line;line-height:1.65;margin-top:8px">'+esc(entry.report)+'</div>';
+  }
   let sortKey = store.get("hl.sort", "value");
   if (sortKey === "recent") sortKey = "ops";
   const OPS_WINDOWS = [["recent", 0, `近${CONFIG.recentMinutes || 60}分`], ["10k", 0, "近1萬筆"]];
@@ -672,16 +689,16 @@ const CONFIG = {
       sortKey === "pnl" ? num(b.unrealizedPnl) - num(a.unrealizedPnl)
       : sortKey === "coin" ? String(a.coin).localeCompare(String(b.coin))
       : num(b.positionValue) - num(a.positionValue));
-    const tabs = [["value", "價值"], ["pnl", "損益"], ["coin", "幣種"], ["ops", "近期操作"]];
+    const tabs = [["value", "價值"], ["pnl", "損益"], ["coin", "幣種"], ["ops", "近期操作"], ["analysis", "分析"]];
     const winSeg = `<div class="seg wins" id="winSeg">${OPS_WINDOWS.map(([k, , l]) => `<button data-win="${k}" aria-pressed="${k === opsWin}">${l}</button>`).join("")}</div>`;
     const opsBody = !opsReady ? `<div class="empty">載入中…</div>`
       : ops.length ? coverage + ops.map(recentRow).join("")
       : `<div class="empty">${isRecentWin ? `最近 ${RECENT_MIN} 分鐘沒有操作` : "查不到成交紀錄"}</div>`;
-    const body = isOps
+    const body = sortKey === "analysis" ? analysisPanel(current) : isOps
       ? winSeg + opsBody
       : (sorted.length ? sorted.map(posRow).join("") : `<div class="empty">目前沒有持倉</div>`);
     html.push(`<section class="card">
-      <div class="card-head"><h2>${isOps ? `近期操作${opsReady ? `（${ops.length}）` : ""}` : `持倉（${positions.length}）`}</h2>
+      <div class="card-head"><h2>${sortKey === "analysis" ? "地址分析" : isOps ? `近期操作${opsReady ? `（${ops.length}）` : ""}` : `持倉（${positions.length}）`}</h2>
         <div class="seg" id="sortSeg">
           ${tabs.map(([k, l]) => `<button data-sort="${k}" aria-pressed="${k === sortKey}">${l}${k === "ops" && recent.length ? ` <span class="dotn">${recent.length}</span>` : ""}</button>`).join("")}
         </div>
@@ -880,6 +897,8 @@ const CONFIG = {
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") refresh(); });
   let rz;
   window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => data && drawChart(), 150); });
+  loadReports();
+  setInterval(loadReports, 300000);
   setInterval(renderStatus, 1000);
 
   (async () => {
