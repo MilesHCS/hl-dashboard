@@ -9,8 +9,8 @@ const add = e => major(e) && e.b!==0 && (e.a*e.b<=0 || Math.abs(e.b)>Math.abs(e.
 const px = n => Math.round(n).toLocaleString('en-US');
 
 // Reconstruct one net event per UTC day. Reject discontinuities and partial oldest days.
-export async function dailyTrades(info,user,coins,now) {
-  const start = now- thirtyDays();
+export async function dailyTrades(info,user,coins,now,start) {
+
   let cursor=start, fills=new Map(), complete=false, firstFullDay=0;
   for(let page=0;page<12;page++) {
     const rows=await info({type:'userFillsByTime',user,startTime:cursor,endTime:now,aggregateByTime:true});
@@ -22,6 +22,7 @@ export async function dailyTrades(info,user,coins,now) {
     const next=Math.max(...rows.map(f=>f.time));
     if(next<=cursor) break;
     cursor=next;
+    await new Promise(resolve=>setTimeout(resolve,1000));
   }
   const groups=new Map();
   for(const f of [...fills.values()].sort((x,y)=>x.time-y.time||x.tid-y.tid)) {
