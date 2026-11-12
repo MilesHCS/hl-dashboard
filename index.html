@@ -158,6 +158,8 @@
   .facts .warn b { color: var(--warn); }
   .facts .hint { display: block; font-size: 11px; color: var(--muted); }
   .recent-chip { margin-top: 10px; padding: 6px 10px; border-radius: 8px; background: var(--accent-wash); color: var(--text); font-size: 13px; }
+  .seg.wins { display: flex; margin-bottom: 12px; }
+  .seg.wins button { flex: 1; }
   .dotn { display: inline-block; min-width: 16px; padding: 0 4px; border-radius: 8px; background: var(--accent); color: #fff; font-size: 11px; line-height: 16px; text-align: center; }
   .nowrap { white-space: nowrap; }
 
@@ -234,6 +236,11 @@ const CONFIG = {
   let period = store.get("hl.period", "day");
   let metric = store.get("hl.metric", "accountValueHistory");
   let sortKey = store.get("hl.sort", "value");
+  if (sortKey === "recent") sortKey = "ops";
+  const OPS_WINDOWS = [["30m", 30, "30分"], ["6h", 360, "6小時"], ["24h", 1440, "24小時"], ["7d", 10080, "一週"]];
+  let opsWin = store.get("hl.opsWin", "30m");
+  if (!OPS_WINDOWS.some((w) => w[0] === opsWin)) opsWin = "30m";
+  const winOf = (k) => OPS_WINDOWS.find((w) => w[0] === k) || OPS_WINDOWS[0];
 
   // ---------- formatting ----------
   const num = (x) => { const v = parseFloat(x); return Number.isFinite(v) ? v : 0; };
@@ -344,8 +351,8 @@ const CONFIG = {
 
   // 最近 N 分鐘每個幣種的淨操作（例如 加空 120 BTC），已經平掉的倉位也會列出
   const RECENT_MIN = CONFIG.recentMinutes || 30;
-  function recentOps(user, fills) {
-    const since = Date.now() - RECENT_MIN * 60000;
+  function recentOps(user, fills, minutes = RECENT_MIN) {
+    const since = Date.now() - minutes * 60000;
     const byCoin = new Map();
     for (const f of fills || []) {
       if (num(f.time) < since) continue;
@@ -400,6 +407,23 @@ const CONFIG = {
     });
   }
 
+  // 某段時間內的成交：userFillsByTime 每次最多 2000 筆，不夠就往後翻頁（最多 1 萬筆）
+  async function fetchFillsSince(user, minutes) {
+    let start = Date.now() - minutes * 60000;
+    const seen = new Set(), all = [];
+    let pages = 0;
+    for (; pages < 5; pages++) {
+      const page = (await hl({ type: "userFillsByTime", user, startTime: start, aggregateByTime: true })) || [];
+      for (const f of page) {
+        const k = f.tid + "|" + f.time + "|" + f.coin;
+        if (!seen.has(k)) { seen.add(k); all.push(f); }
+      }
+      if (page.length < 2000) break;
+      start = Math.max(...page.map((f) => num(f.time))) + 1;
+    }
+    return { fills: all, truncated: pages >= 5 };
+  }
+
   const directSource = {
     id: "direct", label: "直連",
     async load(user) {
@@ -417,16 +441,25 @@ const CONFIG = {
         }
       });
       const errors = [];
-      let trades = [], recent = [], portfolio = null;
+      let trades = [], recent = [], ops = null, opsTruncated = false, portfolio = null;
       try {
         const fills = (await cachedDirect("fills:" + user, 15000, () => hl({ type: "userFills", user }))) || [];
         trades = groupTrades(user, fills);
         recent = recentOps(user, fills);
       } catch (e) { errors.push("成交：" + e.message); }
+      if (sortKey === "ops") {
+        const [key, minutes] = winOf(opsWin);
+        try {
+          const ttl = minutes <= 30 ? 15000 : minutes <= 1440 ? 60000 : 300000;
+          const res = await cachedDirect(`win:${key}:${user}`, ttl, () => fetchFillsSince(user, minutes));
+          ops = recentOps(user, res.fills, minutes);
+          opsTruncated = res.truncated;
+        } catch (e) { errors.push("近期操作：" + e.message); ops = []; }
+      }
       try { portfolio = await cachedDirect("pf:" + user, 60000, () => hl({ type: "portfolio", user })); }
       catch (e) { errors.push("走勢：" + e.message); }
       const t = traders.find((x) => x.user === user);
-      return { user, name: t ? t.name : "", accountValue: String(av), positions, trades, recent, portfolio, errors, updated: Date.now() };
+      return { user, name: t ? t.name : "", accountValue: String(av), positions, trades, recent, ops, opsWin: ops ? opsWin : null, opsTruncated, portfolio, errors, updated: Date.now() };
     },
   };
 
@@ -434,11 +467,13 @@ const CONFIG = {
     return {
       id: "computer", label: "電腦",
       async load(user) {
-        const r = await fetchT(base + "/api/state?user=" + encodeURIComponent(user));
+        const want = sortKey === "ops" ? opsWin : "";
+        const r = await fetchT(base + "/api/state?user=" + encodeURIComponent(user) + (want ? "&ops=" + want : ""));
         const d = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(d.error || "電腦回應 " + r.status);
         if (!d.positions) throw new Error((d.errors || []).join("；") || "沒有資料");
         d.recent = recentOps(user, d.recentFills || []);
+        d.opsWin = want && Array.isArray(d.ops) ? want : null;
         return d;
       },
     };
@@ -549,6 +584,7 @@ const CONFIG = {
 
   function render() {
     const d = data;
+    if (!d) return;
     const positions = d.positions || [];
     const av = num(d.accountValue);
     let upnl = 0, ntl = 0, longN = 0, shortN = 0, margin = 0;
@@ -603,19 +639,26 @@ const CONFIG = {
     // positions + 近 N 分鐘操作
     const recent = d.recent || [];
     recentByCoin = new Map(recent.map((r) => [r.coin, r]));
-    const showRecent = sortKey === "recent";
+    const isOps = sortKey === "ops";
+    const [, winMin, winLabel] = winOf(opsWin);
+    const opsReady = isOps && d.opsWin === opsWin && Array.isArray(d.ops);
+    const ops = opsReady ? d.ops.slice().sort((a, b) => winMin <= 30 ? b.last - a.last : b.notional - a.notional) : [];
     const sorted = positions.slice().sort((a, b) =>
       sortKey === "pnl" ? num(b.unrealizedPnl) - num(a.unrealizedPnl)
       : sortKey === "coin" ? String(a.coin).localeCompare(String(b.coin))
       : num(b.positionValue) - num(a.positionValue));
-    const tabs = [["value", "價值"], ["pnl", "損益"], ["coin", "幣種"], ["recent", `近${RECENT_MIN}分`]];
-    const body = showRecent
-      ? (recent.length ? recent.map(recentRow).join("") : `<div class="empty">最近 ${RECENT_MIN} 分鐘沒有操作</div>`)
+    const tabs = [["value", "價值"], ["pnl", "損益"], ["coin", "幣種"], ["ops", "近期操作"]];
+    const winSeg = `<div class="seg wins" id="winSeg">${OPS_WINDOWS.map(([k, , l]) => `<button data-win="${k}" aria-pressed="${k === opsWin}">${l}</button>`).join("")}</div>`;
+    const opsBody = !opsReady ? `<div class="empty">載入中…</div>`
+      : ops.length ? (d.opsTruncated ? `<div class="small muted">成交太多，只統計到最近 1 萬筆</div>` : "") + ops.map(recentRow).join("")
+      : `<div class="empty">最近 ${winLabel}沒有操作</div>`;
+    const body = isOps
+      ? winSeg + opsBody
       : (sorted.length ? sorted.map(posRow).join("") : `<div class="empty">目前沒有持倉</div>`);
     html.push(`<section class="card">
-      <div class="card-head"><h2>${showRecent ? `近 ${RECENT_MIN} 分（${recent.length}）` : `持倉（${positions.length}）`}</h2>
+      <div class="card-head"><h2>${isOps ? `近期操作${opsReady ? `（${ops.length}）` : ""}` : `持倉（${positions.length}）`}</h2>
         <div class="seg" id="sortSeg">
-          ${tabs.map(([k, l]) => `<button data-sort="${k}" aria-pressed="${k === sortKey}">${l}${k === "recent" && recent.length ? ` <span class="dotn">${recent.length}</span>` : ""}</button>`).join("")}
+          ${tabs.map(([k, l]) => `<button data-sort="${k}" aria-pressed="${k === sortKey}">${l}${k === "ops" && recent.length ? ` <span class="dotn">${recent.length}</span>` : ""}</button>`).join("")}
         </div>
       </div>
       ${body}
@@ -675,7 +718,7 @@ const CONFIG = {
     return `<div class="trade">
       <div class="row"><div class="act">${r.icon} ${esc(r.action)} ${esc(r.coin)} <span class="num">${opAmount(r)}</span></div>${pnl ? `<div class="small num nowrap ${cls(pnl)}">已實現 ${fmtUsd(pnl, true)}</div>` : ""}</div>
       <div class="row small">
-        <div class="sec num">均價 ${fmtPx(r.avgPx)}・成交 ${fmtUsd(r.notional)}・${r.n} 筆</div>
+        <div class="sec num">均價 ${fmtPx(r.avgPx)}・成交 ${fmtUsd(r.notional)}・${r.n} 筆${r.buy > 0 && r.sell > 0 && r.delta !== 0 ? `<br>買 ${fmtSz(r.buy)}／賣 ${fmtSz(r.sell)}` : ""}</div>
         <div class="muted num nowrap">${span}</div>
       </div>
       <div class="small muted num">倉位 ${posWord(r.start)} → ${posWord(r.end)}</div>
@@ -795,7 +838,12 @@ const CONFIG = {
     if (b.id === "refreshBtn") return refresh();
     if (b.dataset.metric) { metric = b.dataset.metric; store.set("hl.metric", metric); return render(); }
     if (b.dataset.period) { period = b.dataset.period; store.set("hl.period", period); return render(); }
-    if (b.dataset.sort) { sortKey = b.dataset.sort; store.set("hl.sort", sortKey); return render(); }
+    if (b.dataset.sort) {
+      sortKey = b.dataset.sort; store.set("hl.sort", sortKey); render();
+      if (sortKey === "ops" && data && data.opsWin !== opsWin) refresh();
+      return;
+    }
+    if (b.dataset.win) { opsWin = b.dataset.win; store.set("hl.opsWin", opsWin); render(); return refresh(); }
     if (b.dataset.user) {
       current = b.dataset.user; data = null;
       try { history.replaceState(null, "", "?user=" + current); } catch {}
