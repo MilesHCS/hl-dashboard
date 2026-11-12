@@ -15,6 +15,19 @@ const labels = ['BTC','ETH','黃金'];
 const day = 86400000;
 const now = Date.now();
 const today = Math.floor(now/day)*day;
+const taipeiDate = time => new Date(Number(time)+8*3600000).toISOString().slice(0,10);
+const reportDate=taipeiDate(now);
+const yesterday=taipeiDate(now-day);
+const archiveDir='analysis/daily';
+await fs.mkdir(archiveDir,{recursive:true});
+const files=(await fs.readdir(archiveDir)).filter(n=>/^\d{4}-\d{2}-\d{2}\.json$/.test(n)&&n.slice(0,10)<reportDate).sort();
+const priorFile=files.at(-1);
+const prior=priorFile?JSON.parse(await fs.readFile(archiveDir+'/'+priorFile,'utf8')):{};
+function baseline(user) {
+  if(prior[user]) return prior[user];
+  const older=(history.snapshots[user]??[]).filter(s=>taipeiDate(s.t)<reportDate).sort((a,b)=>b.t-a.t)[0];
+  return older?{updatedAt:new Date(older.t).toISOString(),quantities:older.q}:null;
+}
 async function info(body) {
   for(let attempt=0;attempt<4;attempt++) {
   const response = await fetch('https://api.hyperliquid.xyz/info', {
@@ -52,7 +65,7 @@ for (const [i,coin] of coins.entries()) {
   contexts.push({price,month,candles});
 }
 for (const [user,name,focus] of traders) {
-  const previous = feed[user];
+  const previous = baseline(user);
   const positions = [];
   for (const dex of ['', 'xyz']) {
     const s = await info({type:'clearinghouseState',user,dex});
@@ -76,7 +89,13 @@ for (const [user,name,focus] of traders) {
   }
   const changes = labels.map((asset,i)=>asset+' '+describe(previous?.quantities?.[i],quantities[i]));
   const watch = q ? '接下來觀察'+label+'：如果價格'+(q>0?'回落':'反彈')+'時繼續加'+(q>0?'多':'空')+'，代表它在逆向波動中增加曝險；如果連續減倉，則顯示它正在收縮這個方向的部位。' : '接下來觀察是否重新開倉，以及新倉選擇的方向。';
-  const report = label+' 合約中間價約 '+Math.round(price).toLocaleString('en-US')+' 美元，'+month+'\n\n'+changes.join('；')+'。'+interpretation+'\n\n'+watch;
+  const baselineDay=previous?taipeiDate(Date.parse(previous.updatedAt)):null;
+  const comparisonPeriod=previous?(baselineDay===yesterday?'與昨日':'與上次可用日期')+'（'+baselineDay+' '+new Date(previous.updatedAt).toLocaleTimeString('zh-TW',{timeZone:'Asia/Taipei',hour:'2-digit',minute:'2-digit',hour12:false})+'）比較。':'首次建立每日基準。';
+  const levels=Object.fromEntries(coins.map((coin,i)=>{
+    const position=positions.find(p=>p.coin===coin);
+    return [coin,{quantity:quantities[i],midUsd:contexts[i].price,entryUsd:position?Number(position.entryPx):null,notionalUsd:position?Number(position.positionValue):0,unrealizedPnlUsd:position?Number(position.unrealizedPnl):0}];
+  }));
+  const report = comparisonPeriod+'\n'+label+' 合約中間價約 '+Math.round(price).toLocaleString('en-US')+' 美元，'+month+'\n\n'+changes.join('；')+'。'+interpretation+'\n\n'+watch;
   const updatedAt = new Date().toISOString();
   const snapshots=history.snapshots[user]??[];
   snapshots.push({t:now,q:quantities});
@@ -95,9 +114,16 @@ for (const [user,name,focus] of traders) {
   history.events[user]=[...events.values()];
   const text=review(history.snapshots[user],history.events[user],focus,contexts[focus].candles,now);
   const goldChange=previous?.quantities ? quantities[2]-previous.quantities[2] : null;
-  feed[user] = {goldChange,name,from:previous?.updatedAt??updatedAt,updatedAt,quantities,report:report+'\n\n'+text+gap};
+  feed[user] = {levels,baselineDate:baselineDay,goldChange,name,from:previous?.updatedAt??updatedAt,updatedAt,quantities,report:report+'\n\n'+text+gap};
 }
 const comparison=goldComparison(feed,traders[0][0],traders[2][0]);
 for(const i of [0,2])feed[traders[i][0]].report+='\n\n'+comparison;
 await fs.writeFile(historyFile,JSON.stringify(history)+'\n');
 await fs.writeFile(file,JSON.stringify(feed,null,2)+'\n');
+
+const archivePath=archiveDir+'/'+reportDate+'.json';
+try {
+  await fs.writeFile(archivePath,JSON.stringify(feed,null,2)+'\n',{flag:'wx'});
+} catch(error) {
+  if(error.code!=='EEXIST') throw error;
+}
