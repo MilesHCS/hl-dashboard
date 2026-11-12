@@ -30,7 +30,7 @@ jobs:
           node scripts/daily-analysis.mjs
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add analysis/latest.json analysis/observations.json
+          git add analysis/latest.json analysis/observations.json analysis/daily/
           git commit -m "Publish daily whale positions"
           git push origin HEAD:main
       - name: Prepare dashboard
@@ -38,6 +38,7 @@ jobs:
           mkdir -p _site/analysis
           cp index.html _site/
           cp analysis/latest.json _site/analysis/
+          cp -r analysis/daily _site/analysis/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
