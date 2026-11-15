@@ -238,12 +238,16 @@ const CONFIG = {
   let data = null, lastOk = 0, lastErr = "", timer = null, loading = false;
   let period = store.get("hl.period", "day");
   let metric = store.get("hl.metric", "accountValueHistory");
-  let reports = null, reportError = false;
+  let reports = null, reportError = false, combinedReport = null;
   async function loadReports() {
     try {
       const response = await fetch("./analysis/latest.json", {cache:"no-store"});
       if (!response.ok) throw Error(response.status);
       reports = await response.json();
+      try {
+        const summaryResponse = await fetch("./analysis/summary.json", {cache:"no-store"});
+        combinedReport = summaryResponse.ok ? await summaryResponse.json() : null;
+      } catch { combinedReport = null; }
       reportError = false;
     } catch { reportError = true; }
     if (data && sortKey === "analysis") render();
@@ -252,7 +256,8 @@ const CONFIG = {
     const entry = reports?.[user.toLowerCase()];
     if (!entry) return '<div class="empty">'+(reportError?'分析載入失敗，請重新整理。':reports?'此地址尚無日報。':'分析載入中…')+'</div>';
     const time = new Date(entry.updatedAt).toLocaleString("zh-TW",{timeZone:"Asia/Taipei",hour12:false});
-    return '<div class="small muted">'+esc(entry.name)+' · '+esc(time)+' 台灣時間'+(reportError?' · 顯示上次資料':'')+'</div><div style="white-space:pre-line;line-height:1.65;margin-top:8px">'+esc(entry.report)+'</div>';
+    const combined = combinedReport?.report ? '<hr style="border:0;border-top:1px solid var(--line);margin:20px 0"><strong>三個地址綜合結論</strong><div class="small muted">'+esc(new Date(combinedReport.updatedAt).toLocaleString("zh-TW",{timeZone:"Asia/Taipei",hour12:false}))+' 台灣時間</div><div style="white-space:pre-line;line-height:1.65;margin-top:8px">'+esc(combinedReport.report)+'</div>' : '';
+    return '<div class="small muted">'+esc(entry.name)+' · '+esc(time)+' 台灣時間'+(reportError?' · 顯示上次資料':'')+'</div><div style="white-space:pre-line;line-height:1.65;margin-top:8px">'+esc(entry.report)+'</div>'+combined;
   }
   let sortKey = store.get("hl.sort", "value");
   if (sortKey === "recent") sortKey = "ops";

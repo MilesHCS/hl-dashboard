@@ -1,129 +1,156 @@
 import fs from 'node:fs/promises';
+import { review } from './swing-context.mjs';
+import { refreshStrategyCache } from './strategy-data.mjs';
+import { describeStrategy, summarizeTraders } from './strategy-report.mjs';
 
-import {dailyTrades,review,goldComparison} from './swing-context.mjs';
-const historyFile='analysis/observations.json';
-const history=JSON.parse(await fs.readFile(historyFile,'utf8'));
-const file = 'analysis/latest.json';
-const feed = JSON.parse(await fs.readFile(file, 'utf8'));
-const traders = [
-  ['0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36','BTC大佬',0],
-  ['0x5b5d51203a0f9079f8aeb098a6523a13f298c060','ETH大佬',1],
-  ['0x46921f6961bdb411b756c9712f6bdb58fbd9164f','黃金大佬',2],
-];
-const coins = ['BTC','ETH','xyz:GOLD'];
-const labels = ['BTC','ETH','黃金'];
-const day = 86400000;
+const DAY = 86400000;
 const now = Date.now();
-const today = Math.floor(now/day)*day;
-const taipeiDate = time => new Date(Number(time)+8*3600000).toISOString().slice(0,10);
-const reportDate=taipeiDate(now);
-const yesterday=taipeiDate(now-day);
-const archiveDir='analysis/daily';
-await fs.mkdir(archiveDir,{recursive:true});
-const files=(await fs.readdir(archiveDir)).filter(n=>/^\d{4}-\d{2}-\d{2}\.json$/.test(n)&&n.slice(0,10)<reportDate).sort();
-const priorFile=files.at(-1);
-const prior=priorFile?JSON.parse(await fs.readFile(archiveDir+'/'+priorFile,'utf8')):{};
+const today = Math.floor(now / DAY) * DAY;
+const taipeiDate = time => new Date(time + 8 * 3600000).toISOString().slice(0, 10);
+const reportDate = taipeiDate(now);
+const coins = ['BTC', 'ETH', 'xyz:GOLD'];
+const traders = [
+  ['0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36', 'BTC大佬', 0],
+  ['0x5b5d51203a0f9079f8aeb098a6523a13f298c060', 'ETH大佬', 1],
+  ['0x46921f6961bdb411b756c9712f6bdb58fbd9164f', '黃金大佬', 2],
+];
+const historyPath = 'analysis/observations.json';
+const cachePath = 'analysis/strategy-cache.json';
+const archiveDirectory = 'analysis/daily';
+const history = JSON.parse(await fs.readFile(historyPath, 'utf8'));
+const storedCache = JSON.parse(await fs.readFile(cachePath, 'utf8'));
+await fs.mkdir(archiveDirectory, { recursive: true });
+const previousFiles = (await fs.readdir(archiveDirectory))
+  .filter(name => /^\d{4}-\d{2}-\d{2}\.json$/.test(name) && name.slice(0, 10) < reportDate).sort();
+const previousArchive = previousFiles.length
+  ? JSON.parse(await fs.readFile(archiveDirectory + '/' + previousFiles.at(-1), 'utf8')) : {};
+
 function baseline(user) {
-  if(prior[user]) return prior[user];
-  const older=(history.snapshots[user]??[]).filter(s=>taipeiDate(s.t)<reportDate).sort((a,b)=>b.t-a.t)[0];
-  return older?{updatedAt:new Date(older.t).toISOString(),quantities:older.q}:null;
+  if (previousArchive[user]) return previousArchive[user];
+  const older = (history.snapshots[user] ?? [])
+    .filter(row => taipeiDate(row.t) < reportDate).sort((a, b) => b.t - a.t)[0];
+  return older ? { updatedAt: new Date(older.t).toISOString(), quantities: older.q } : null;
 }
+
 async function info(body) {
-  for(let attempt=0;attempt<4;attempt++) {
-  const response = await fetch('https://api.hyperliquid.xyz/info', {
-    method:'POST', headers:{'content-type':'application/json'},
-    body:JSON.stringify(body), signal:AbortSignal.timeout(20000)
-  });
-  if (response.status===429 && attempt<3) { await new Promise(resolve=>setTimeout(resolve,Math.max(Number(response.headers.get('Retry-After'))||0,8*2**attempt)*1000)); continue; }
-  if (!response.ok) throw Error('Hyperliquid HTTP '+response.status);
-  return response.json();
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const response = await fetch('https://api.hyperliquid.xyz/info', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body), signal: AbortSignal.timeout(20000),
+    });
+    if (response.status === 429 && attempt < 3) {
+      const seconds = Math.max(Number(response.headers.get('Retry-After')) || 0, 8 * 2 ** attempt);
+      await new Promise(resolve => setTimeout(resolve, seconds * 1000));
+      continue;
+    }
+    if (!response.ok) throw Error('Hyperliquid HTTP ' + response.status);
+    return response.json();
   }
 }
-function describe(before, qty) {
-  const side = qty > 0 ? '多單' : '空單';
-  if (before == null) return qty ? '目前持有'+side : '目前無倉';
-  if (qty === before) return qty ? side+'數量持平' : '維持無倉';
-  if (!qty) return '已平掉原有'+(before>0?'多單':'空單');
-  if (!before) return '新開'+side;
-  if (Math.sign(qty)!==Math.sign(before)) return '已反手轉為'+side;
-  const ratio = Math.abs(qty / before)-1;
-  return (ratio>0?'增加':'減少')+side+(Math.abs(ratio)<0.01?'，幅度不到 1%':'約 '+Math.round(Math.abs(ratio)*100)+'%');
-}
+
+const key = process.env.IRONFLOW_API_KEY;
+console.log('Ironflow key configured:', Boolean(key));
+const refreshed = await refreshStrategyCache({
+  cache: storedCache, key, now,
+  request: async sql => {
+    const response = await fetch('https://api.ironflow.sh/v1/query', {
+      method: 'POST', headers: { Authorization: 'Bearer ' + key, 'content-type': 'application/json' },
+      body: JSON.stringify({ sql }), signal: AbortSignal.timeout(30000),
+    });
+    if (!response.ok) throw Error('Ironflow HTTP ' + response.status);
+    return response.json();
+  },
+});
+const cache = refreshed.cache;
+console.log('Strategy query calls:', refreshed.calls, refreshed.status);
+
+const mids = [await info({ type: 'allMids' }), await info({ type: 'allMids', dex: 'xyz' })];
 const contexts = [];
-for (const [i,coin] of coins.entries()) {
-  const dex = i===2 ? 'xyz' : '';
-  const mids = await info({type:'allMids',dex});
-  const price = Number(mids[coin]);
-  if (!(price>0)) throw Error('Missing price for '+coin);
-  const candles = await info({type:'candleSnapshot',req:{coin,interval:'1d',startTime:today-366*day,endTime:now}});
-  const first = candles.find(c=>Number(c.t)===today-30*day);
-  let month = '近一個月的起始價格資料不足。';
-  if (Number(first?.o)>0) {
-    const pct = (price/Number(first.o)-1)*100;
-    month = '相較約 30 天前'+(pct>=0?'上漲':'下跌')+'約 '+Math.abs(pct).toFixed(1)+'%。';
+for (const [index, coin] of coins.entries()) {
+  const price = Number(mids[index === 2 ? 1 : 0][coin]);
+  if (!(price > 0)) throw Error('Missing market price');
+  const candles = await info({ type: 'candleSnapshot', req: { coin, interval: '1d', startTime: today - 366 * DAY, endTime: now } });
+  const fourHourCandles = await info({ type: 'candleSnapshot', req: { coin, interval: '4h', startTime: today - 120 * DAY, endTime: now } });
+  if (!Array.isArray(candles) || !Array.isArray(fourHourCandles)) throw Error('Missing candles');
+  const first = candles.find(candle => Number(candle.t) === today - 30 * DAY);
+  let month = '近月起始價格待補。';
+  if (Number(first?.o) > 0) {
+    const change = (price / Number(first.o) - 1) * 100;
+    month = '相較約 30 天前' + (change >= 0 ? '上漲' : '下跌') + '約 ' + Math.abs(change).toFixed(1) + '%。';
   }
-  contexts.push({price,month,candles});
+  contexts.push({ price, month, candles, fourHourCandles });
 }
-for (const [user,name,focus] of traders) {
+
+const feed = {};
+for (const [user, name, focus] of traders) {
   const previous = baseline(user);
   const positions = [];
   for (const dex of ['', 'xyz']) {
-    const s = await info({type:'clearinghouseState',user,dex});
-    if (!Array.isArray(s.assetPositions)) throw Error('Missing positions');
-    positions.push(...s.assetPositions.map(x=>x.position));
+    const state = await info({ type: 'clearinghouseState', user, dex });
+    if (!Array.isArray(state.assetPositions)) throw Error('Incomplete position snapshot');
+    positions.push(...state.assetPositions.map(row => row.position));
   }
-  const quantities = coins.map(coin=>{
-    const p = positions.find(x=>x.coin===coin);
-    const q = p ? Number(p.szi) : 0;
-    if (!Number.isFinite(q)) throw Error('Invalid size');
-    return q;
-  });
-  const q = quantities[focus], label = labels[focus];
-  const {price,month} = contexts[focus];
-  const side = q>0?'多單':'空單';
-  const entry = Number(positions.find(x=>x.coin===coins[focus])?.entryPx);
-  let interpretation = '';
-  if (q && entry>0) {
-    const favorable = q*(price-entry)>0;
-    interpretation = price===entry?'現價在持倉均價附近。':'現價'+(price>entry?'高於':'低於')+'持倉均價，價格變動對這筆'+side+(favorable?'有利。':'不利。');
+  const quantities = coins.map(coin => Number(positions.find(p => p.coin === coin)?.szi ?? 0));
+  if (quantities.some(q => !Number.isFinite(q))) throw Error('Invalid quantity');
+  let hedge = null;
+  if (focus !== 2) {
+    try {
+      const spot = await info({ type: 'spotClearinghouseState', user });
+      if (!Array.isArray(spot.balances)) throw Error('Missing spot balances');
+      const spotHype = Number(spot.balances.find(balance => balance.coin === 'HYPE')?.total ?? 0);
+      const perpHype = Number(positions.find(p => p.coin === 'HYPE')?.szi ?? 0);
+      if (!Number.isFinite(spotHype) || !Number.isFinite(perpHype)) throw Error('Invalid hedge size');
+      hedge = { spotHype, perpHype, at: new Date().toISOString(), scope: 'Hyperliquid main and xyz perpetuals plus spot' };
+    } catch { console.warn('Spot hedge snapshot unavailable for', name); }
   }
-  const changes = labels.map((asset,i)=>asset+' '+describe(previous?.quantities?.[i],quantities[i]));
-  const watch = q ? '接下來觀察'+label+'：如果價格'+(q>0?'回落':'反彈')+'時繼續加'+(q>0?'多':'空')+'，代表它在逆向波動中增加曝險；如果連續減倉，則顯示它正在收縮這個方向的部位。' : '接下來觀察是否重新開倉，以及新倉選擇的方向。';
-  const baselineDay=previous?taipeiDate(Date.parse(previous.updatedAt)):null;
-  const comparisonPeriod=previous?(baselineDay===yesterday?'與昨日':'與上次可用日期')+'（'+baselineDay+' '+new Date(previous.updatedAt).toLocaleTimeString('zh-TW',{timeZone:'Asia/Taipei',hour:'2-digit',minute:'2-digit',hour12:false})+'）比較。':'首次建立每日基準。';
-  const levels=Object.fromEntries(coins.map((coin,i)=>{
-    const position=positions.find(p=>p.coin===coin);
-    return [coin,{quantity:quantities[i],midUsd:contexts[i].price,entryUsd:position?Number(position.entryPx):null,notionalUsd:position?Number(position.positionValue):0,unrealizedPnlUsd:position?Number(position.unrealizedPnl):0}];
-  }));
-  const report = comparisonPeriod+'\n'+label+' 合約中間價約 '+Math.round(price).toLocaleString('en-US')+' 美元，'+month+'\n\n'+changes.join('；')+'。'+interpretation+'\n\n'+watch;
   const updatedAt = new Date().toISOString();
-  const snapshots=history.snapshots[user]??[];
-  snapshots.push({t:now,q:quantities});
-  history.snapshots[user]=snapshots.filter(s=>s.t>=now-366*day);
-  const retained=(history.events[user]??[]).filter(e=>e.t>=today-365*day);
-  const events=new Map(retained.map(e=>[e.t+'/'+e.i,e]));
-  let fresh=[], gap='';
-  try {
-    const since=retained.length?Math.max(today-30*day,Math.max(...retained.map(e=>e.t))-day):today-30*day;
-    fresh=await dailyTrades(info,user,coins,now,since);
-  } catch(error) {
-    console.warn('Fill history unavailable',user,error.message);
-    gap='\n本期成交查詢未完成，成交區間及樣本只列已保存紀錄。';
-  }
-  for(const e of fresh) if(e.t<today)events.set(e.t+'/'+e.i,e);
-  history.events[user]=[...events.values()];
-  const text=review(history.snapshots[user],history.events[user],focus,contexts[focus].candles,now);
-  const goldChange=previous?.quantities ? quantities[2]-previous.quantities[2] : null;
-  feed[user] = {levels,baselineDate:baselineDay,goldChange,name,from:previous?.updatedAt??updatedAt,updatedAt,quantities,report:report+'\n\n'+text+gap};
+  const levels = Object.fromEntries(coins.map((coin, index) => {
+    const position = positions.find(p => p.coin === coin);
+    return [coin, {
+      quantity: quantities[index], midUsd: contexts[index].price,
+      entryUsd: position ? Number(position.entryPx) : null,
+      notionalUsd: position ? Number(position.positionValue) : 0,
+      unrealizedPnlUsd: position ? Number(position.unrealizedPnl) : 0,
+    }];
+  }));
+  const report = describeStrategy({ user, focus, quantities, previous, context: contexts[focus], cache, hedge, now });
+  const events = (history.events[user] ?? []).filter(event => event.t >= today - 365 * DAY);
+  const forwardStudy = events.length
+    ? '\n\n歷史事件追蹤：' + review(history.snapshots[user] ?? [], events, focus, contexts[focus].candles, now).split('\n').at(-1) : '';
+  const comparisonTime = previous
+    ? '比較起點 ' + new Date(previous.updatedAt).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', hour12: false }) + '（台灣時間）。'
+    : '本期建立持倉比較基準。';
+  feed[user] = {
+    name, levels, hedge, quantities, previousQuantities: previous?.quantities ?? null,
+    baselineDate: previous ? taipeiDate(Date.parse(previous.updatedAt)) : null,
+    from: previous?.updatedAt ?? updatedAt, updatedAt,
+    goldChange: previous?.quantities ? quantities[2] - previous.quantities[2] : null,
+    strategyAsOf: cache.toISO, strategyStatus: refreshed.status,
+    report: comparisonTime + '\n\n' + report + '\n\n' + refreshed.status + forwardStudy,
+  };
+  const snapshots = history.snapshots[user] ?? [];
+  snapshots.push({ t: now, q: quantities });
+  history.snapshots[user] = snapshots.filter(snapshot => snapshot.t >= now - 366 * DAY);
+  history.events[user] = events;
 }
-const comparison=goldComparison(feed,traders[0][0],traders[2][0]);
-for(const i of [0,2])feed[traders[i][0]].report+='\n\n'+comparison;
-await fs.writeFile(historyFile,JSON.stringify(history)+'\n');
-await fs.writeFile(file,JSON.stringify(feed,null,2)+'\n');
+const summary = summarizeTraders(feed, now);
+summary.strategyAsOf = cache.toISO;
+summary.strategyStatus = refreshed.status;
+summary.usage = { sqlCalls: refreshed.calls, estimatedCredits: refreshed.calls * 10 };
+summary.report += '\n\n' + refreshed.status;
+for (const entry of [...Object.values(feed), summary]) {
+  if (entry.report.length > 3700) throw Error('Telegram report too long');
+}
 
-const archivePath=archiveDir+'/'+reportDate+'.json';
-try {
-  await fs.writeFile(archivePath,JSON.stringify(feed,null,2)+'\n',{flag:'wx'});
-} catch(error) {
-  if(error.code!=='EEXIST') throw error;
+await fs.writeFile(cachePath, JSON.stringify(cache) + '\n');
+await fs.writeFile(historyPath, JSON.stringify(history) + '\n');
+await fs.writeFile('analysis/latest.json', JSON.stringify(feed, null, 2) + '\n');
+await fs.writeFile('analysis/summary.json', JSON.stringify(summary, null, 2) + '\n');
+for (const [path, content] of [
+  [archiveDirectory + '/' + reportDate + '.json', feed],
+  [archiveDirectory + '/summary-' + reportDate + '.json', summary],
+]) {
+  try { await fs.writeFile(path, JSON.stringify(content, null, 2) + '\n', { flag: 'wx' }); }
+  catch (error) { if (error.code !== 'EEXIST') throw error; }
 }
+console.log('Published reports:', Object.keys(feed).length + 1);
