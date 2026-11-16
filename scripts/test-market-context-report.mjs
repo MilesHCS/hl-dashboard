@@ -228,3 +228,37 @@ test('convergence of whales, ETF and trend supports repair without declaring the
   assert.match(result.report,/即使同向，也只支持風險修復，不證明底部完成/);
   assert.ok(result.report.length<=1800);
 });
+
+test('nonzero residual positions display nearly 100% reduction without claiming complete closure',()=>{
+  const input=fixture();
+  input.feed[ADDRESSES[0]].previousQuantities=[-338.85639,1000,-6116.2027];
+  input.feed[ADDRESSES[0]].quantities=[-0.00639,0.001,-0.0941];
+  const result=describeMarketContext(input);
+  const markets=result.whaleAlignment.rows[0].markets;
+  assert.equal(markets.BTC.action,'cover_short');
+  assert.equal(markets.BTC.direction,'short');
+  assert.equal(markets.BTC.text,'空單回補接近100%');
+  assert.equal(markets.ETH.action,'reduce_long');
+  assert.equal(markets.ETH.text,'多單減倉接近100%');
+  assert.equal(markets.GOLD.text,'空單回補接近100%');
+  assert.doesNotMatch(result.report,/回補100%/);
+});
+
+test('two residual shorts below 1% of baseline describe a major exit, not original bearish strength',()=>{
+  const input=fixture();
+  input.feed[ADDRESSES[0]].previousQuantities[0]=-338.85639;
+  input.feed[ADDRESSES[0]].quantities[0]=-0.00639;
+  input.feed[ADDRESSES[1]].previousQuantities[0]=-872.5119;
+  input.feed[ADDRESSES[1]].quantities[0]=-3.28011;
+  input.context.etf.BTC.fiveSessionNetUsd=-1e8;
+  input.context.etf.BTC.twentySessionNetUsd=-5e8;
+  input.context.btc.weekly.forEach(row=>{row.price=65000;});
+  const result=describeMarketContext(input);
+  assert.equal(result.whaleAlignment.nearlyFlatShorts,true);
+  assert.match(result.whaleAlignment.btcAlignment,/剩餘均不到前期1%/);
+  assert.match(result.report,/尚未翻多，也不代表維持原有看空強度/);
+  assert.match(result.report,/兩位已大幅退出BTC空頭/);
+  assert.doesNotMatch(result.report,/兩位回補BTC但仍空/);
+  assert.equal(result.whaleAlignment.rows[1].markets.BTC.direction,'short');
+  assert.ok(result.report.length<=1800);
+});

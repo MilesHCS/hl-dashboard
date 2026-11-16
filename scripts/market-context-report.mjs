@@ -147,11 +147,14 @@ function quantityChange(before, after) {
   if (before === 0) return { action: after > 0 ? 'open_long' : 'open_short', direction, delta, text: '新開' + side };
   if (before * after < 0) return { action: after > 0 ? 'reverse_long' : 'reverse_short', direction, delta, text: after > 0 ? '空轉多' : '多轉空' };
   const increased = Math.abs(after) > Math.abs(before);
-  const magnitude = Math.abs((Math.abs(after) / Math.abs(before) - 1) * 100);
-  const ratio = magnitude < 0.1 ? '<0.1%' : round(magnitude, 1) + '%';
+  const remainingFraction = Math.abs(after) / Math.abs(before);
+  const magnitude = Math.abs((remainingFraction - 1) * 100);
+  // A nonzero residual must not be rounded into an assertion of complete closure.
+  const ratio = !increased && magnitude >= 99.95 ? '接近100%'
+    : magnitude < 0.1 ? '<0.1%' : round(magnitude, 1) + '%';
   const action = after > 0 ? increased ? 'add_long' : 'reduce_long' : increased ? 'add_short' : 'cover_short';
   const text = after > 0 ? '多單' + (increased ? '加倉' : '減倉') + ratio : '空單' + (increased ? '加倉' : '回補') + ratio;
-  return { action, direction, delta, text };
+  return { action, direction, delta, remainingFraction, text };
 }
 
 function whales(feed) {
@@ -164,10 +167,14 @@ function whales(feed) {
     };
   });
   const pair = rows.slice(0, 2).map(row => row.markets.BTC);
+  const nearlyFlatShorts = pair.every(item => item.action === 'cover_short'
+    && finite(item.remainingFraction) && item.remainingFraction < 0.01);
   let btcAlignment = '兩位加密大佬的BTC方向或比較基準未齊。';
   if (pair.every(item => finite(item.delta))) {
     if (pair.every(item => item.delta > 0)) {
-      btcAlignment = pair.every(item => item.direction === 'short')
+      btcAlignment = nearlyFlatShorts
+        ? '兩位加密大佬均大幅回補BTC空單，剩餘均不到前期1%；尚未翻多，也不代表維持原有看空強度。'
+        : pair.every(item => item.direction === 'short')
         ? '兩位加密大佬都往回補BTC空單方向移動，仍為空頭。'
         : '兩位加密大佬的BTC數量都向多方移動，現有方向另看個別部位。';
     } else if (pair.every(item => item.delta < 0)) {
@@ -181,7 +188,7 @@ function whales(feed) {
     ? goldPair[0].direction !== goldPair[1].direction : null;
   const goldAdjustmentSplit = goldPair.every(item => finite(item.delta))
     ? goldPair[0].delta * goldPair[1].delta < 0 : null;
-  return { rows, btcAlignment, goldDirectionSplit, goldAdjustmentSplit,
+  return { rows, btcAlignment, nearlyFlatShorts, goldDirectionSplit, goldAdjustmentSplit,
     scope: '僅三個可見地址及本期數量比較，不代表全市場或完整資產組合。' };
 }
 
@@ -222,7 +229,10 @@ function crossRead(context, alignment, confirmation, now) {
   const priceConfirmed = maRules.every(item => item.status === 'passed');
   const priceUnknown = maRules.some(item => item.status === 'insufficient');
   const priceText = priceConfirmed ? '長週線修復條件已過' : priceUnknown ? '長週線確認資料未齊' : '長週線修復條件未過';
-  const observation = outgoing && shortCovering
+  const observation = outgoing && alignment.nearlyFlatShorts
+    ? '兩位已大幅退出BTC空頭，殘餘均不到前期1%；尚未翻多，也不代表維持原有看空強度。已報ETF5／20日流出，'
+      + priceText + '。若後續維持小倉或無倉，較符合降風險或觀望的候選情境，仍缺資金與趨勢支持翻多。'
+    : outgoing && shortCovering
     ? '兩位回補BTC但仍空，已報ETF5／20日流出，' + priceText + '，訊號分歧。若後續仍只回補而未開多，可能偏向獲利了結或降風險，動機仍待核對；資金與趨勢尚不足支持翻多。'
     : outgoing && towardLong ? '地址向多方調整與ETF流出並存，' + priceText + '，承接仍待確認。'
     : outgoing && towardShort ? '地址向空方調整與ETF流出同向，' + priceText + '，修復仍受壓。'
