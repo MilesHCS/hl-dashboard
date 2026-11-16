@@ -1,9 +1,627 @@
 {
   "name": "三個地址綜合結論",
-  "updatedAt": "2026-11-16T07:50:00.506Z",
-  "from": "2026-11-15T07:42:47.497Z",
-  "report": "BTC大佬和 ETH大佬都減少 BTC 空單，加密空頭曝險正在收縮。BTC大佬的 BTC 回補比例較大或相近。\n\n本期差異：BTC大佬的BTC減少空單約 75.2%；ETH大佬的ETH減少空單，幅度不到 1%；黃金大佬的黃金減少空單約 1.1%。\n\n黃金比較：三個地址均保留黃金空頭。各地址調倉幅度不同，持續幾期的核心數量更值得追蹤。\n\n下一期重點：觀察價格反彈接近 MA20 時，兩位加密交易者是否重新加空，或仍持續回補；再看黃金是否同步收縮。這能逐步區分階段性調整與更持續的方向改變。\n\n風險與資料：HYPE 現貨／永續配對主要抵銷該資產的部分曝險。跨地址同向操作與近月均線關聯，仍需更長行情和整體部位核對。各地址的實際比較時段見個別日報。\n\n策略資料已增量更新。",
-  "strategyAsOf": "2026-11-16T07:49:56.965Z",
+  "updatedAt": "2026-11-16T16:38:27.413Z",
+  "from": "2026-11-16T07:50:00.506Z",
+  "report": "BTC大佬和 ETH大佬都減少 BTC 空單，加密空頭曝險正在收縮。BTC大佬的 BTC 回補比例較大或相近。\n\n本期差異：BTC大佬的BTC減少空單約 100%；ETH大佬的ETH減少空單約 100%；黃金大佬的黃金增加空單約 2.7%。\n\n黃金比較：三個地址均保留黃金空頭。本期有人回補、有人加空，調倉方向出現分歧。\n\n下一期重點：觀察價格反彈接近 MA20 時，兩位加密交易者是否重新加空，或仍持續回補；再看黃金是否同步收縮。這能逐步區分階段性調整與更持續的方向改變。\n\n風險與資料：HYPE 現貨／永續配對主要抵銷該資產的部分曝險。跨地址同向操作與近月均線關聯，仍需更長行情和整體部位核對。各地址的實際比較時段見個別日報。\n\n週期位階：BTC日收盤約65,189美元，今年-25.5%；距本輪最高收盤-47.8%，目前最深回撤-53.1%。\n\n資料日距高點約405天，歷史三輪到低點約364–406天。時間相似不等於已見底；本輪低點仍暫定，最終跌幅未定。\n\n底部候選規則（50／200週線約74,980美元／67,967美元，隨週更新）：連續兩週站穩200週線【未通過】；連續兩週站穩50週線且均線不再下降【未通過】；BTC ETF近5與20個完整交易日均淨流入【未通過】。反轉條件尚未成立。規則未經完整回測或機率校準，全部通過也不保證見底。\n\nBTC ETF：近5／20完整交易日淨流出10.7億美元／淨流出22.4億美元。ETH ETF（The Block已涵蓋8檔，非全體）：近5／20完整交易日淨流出3.7億美元／淨流出13億美元。\n\nBTC近5完整交易日：主要淨申購MSBT、主要淨贖回IBIT。ETH近5完整交易日：主要淨申購QETH、主要淨贖回ETHA。\n\n大戶本期方向（快照截至11/17 00:38台灣時間）：\nBTC大佬：BTC空單回補100%；ETH空持平；GOLD空單回補100%。\nETH大佬：BTC空單回補99.6%；ETH空單回補100%；GOLD空單回補99.9%。\n黃金大佬：BTC無倉持平；ETH無倉持平；GOLD空單加倉2.7%。\n\n兩位加密大佬都往回補BTC空單方向移動，仍為空頭。BTC大佬與黃金大佬的黃金加減倉方向分歧。\n\n交叉判讀：兩位回補BTC但仍空，已報ETF5／20日流出，長週線修復條件未過，訊號分歧。若後續仍只回補而未開多，可能偏向獲利了結或降風險，動機仍待核對；資金與趨勢尚不足支持翻多。資料日期不同，不推因果，仍需後續驗證。\n\n下一期驗證：看週收盤能否站穩均線、ETF能否持續轉流入，並觀察大戶是否保留新方向。若日收盤跌破暫定低點（2026-06-30，58,525美元）、再失守均線或ETF持續流出，修復推論需下修。\n\n資料時間：BTC價格 2026-11-15（已更新）；BTC ETF 2026-11-13（已更新）；ETH ETF 2026-11-13（已更新）。週線截至2026-11-15。\n\n範圍：大戶只按數量變化判斷；回補不等於翻多，其他帳戶或現貨可能對沖。ETF淨申贖僅代表一項機構通道，含套利需求，亦未涵蓋企業、黃金基金等全部機構；三地址不代表全市場。\n\n策略資料已增量更新。",
+  "marketContext": {
+    "generatedAt": "2026-11-16T16:38:23.263Z",
+    "sources": {
+      "prices": {
+        "status": "updated",
+        "asOf": "2026-11-15",
+        "ageDays": 1,
+        "stale": false,
+        "fetchedAt": "2026-11-16T16:38:23.263Z",
+        "checkedAt": "2026-11-16T16:38:23.263Z",
+        "url": "https://community-api.coinmetrics.io/v4/timeseries/asset-metrics?assets=btc&metrics=PriceUSD&frequency=1d&start_time=2010-07-18&end_time=2026-11-16&page_size=10000"
+      },
+      "btcEtf": {
+        "status": "updated",
+        "asOf": "2026-11-13",
+        "ageDays": 3,
+        "stale": false,
+        "fetchedAt": "2026-11-16T16:38:23.263Z",
+        "checkedAt": "2026-11-16T16:38:23.263Z",
+        "url": "https://data.tbstat.com/dashboard/markets_structuredproducts_btcspotetfflows_daily_other.json",
+        "provider": "The Block",
+        "primaryError": "HTTP 403"
+      },
+      "ethEtf": {
+        "status": "updated",
+        "asOf": "2026-11-13",
+        "ageDays": 3,
+        "stale": false,
+        "fetchedAt": "2026-11-16T16:38:23.263Z",
+        "checkedAt": "2026-11-16T16:38:23.263Z",
+        "url": "https://data.tbstat.com/dashboard/markets_structuredproducts_ethspotetfflows_daily_other.json",
+        "provider": "The Block",
+        "primaryError": "HTTP 403"
+      }
+    },
+    "btc": {
+      "asOf": "2026-11-15",
+      "priceUsd": 65189.110705488,
+      "yearReturnPct": -25.51261233287976,
+      "peak": {
+        "date": "2025-10-06",
+        "price": 124824.453666861
+      },
+      "low": {
+        "date": "2026-06-30",
+        "price": 58525.0753614845
+      },
+      "drawdownPct": -47.775368695409135,
+      "maxDrawdownPct": -53.11409452054985,
+      "daysSincePeak": 405,
+      "calendarDaysSincePeak": 406,
+      "daysToLow": 267,
+      "weeklyAsOf": "2026-11-15",
+      "ma50WeekUsd": 74979.8458297683,
+      "ma200WeekUsd": 67967.08438457736,
+      "ma50WeekPreviousUsd": 75488.217658686,
+      "weekly": [
+        {
+          "date": "2026-06-07",
+          "price": 63158.25397737,
+          "ma50": 92651.67814927062,
+          "ma200": 61818.58911683604
+        },
+        {
+          "date": "2026-06-14",
+          "price": 65615.3266107481,
+          "ma50": 91796.76664755806,
+          "ma200": 62025.09473923227
+        },
+        {
+          "date": "2026-06-21",
+          "price": 63365.4368950906,
+          "ma50": 90880.47527454812,
+          "ma200": 62234.15194284916
+        },
+        {
+          "date": "2026-06-28",
+          "price": 59516.6736531268,
+          "ma50": 89692.81400545403,
+          "ma200": 62433.3676050204
+        },
+        {
+          "date": "2026-07-05",
+          "price": 63619.8810414962,
+          "ma50": 88619.09800720736,
+          "ma200": 62651.65745077436
+        },
+        {
+          "date": "2026-07-12",
+          "price": 63752.2716569258,
+          "ma50": 87505.3801556352,
+          "ma200": 62861.75495621562
+        },
+        {
+          "date": "2026-07-19",
+          "price": 64653.0497457627,
+          "ma50": 86513.16727159664,
+          "ma200": 63087.88470363117
+        },
+        {
+          "date": "2026-07-26",
+          "price": 65328.7891218585,
+          "ma50": 85435.95909082831,
+          "ma200": 63320.56286847484
+        },
+        {
+          "date": "2026-08-02",
+          "price": 63445.6829658095,
+          "ma50": 84352.83370550675,
+          "ma200": 63542.71481927846
+        },
+        {
+          "date": "2026-08-09",
+          "price": 64864.9272893045,
+          "ma50": 83379.80980180482,
+          "ma200": 63769.897620063086
+        },
+        {
+          "date": "2026-08-16",
+          "price": 62818.4112106955,
+          "ma50": 82469.84908812254,
+          "ma200": 63987.68092717734
+        },
+        {
+          "date": "2026-08-23",
+          "price": 77593.0280291116,
+          "ma50": 81795.55396028301,
+          "ma200": 64277.81900570105
+        },
+        {
+          "date": "2026-08-30",
+          "price": 77689.1906069491,
+          "ma50": 81041.41910395325,
+          "ma200": 64563.18144185239
+        },
+        {
+          "date": "2026-09-06",
+          "price": 80319.9731380596,
+          "ma50": 80341.4013901335,
+          "ma200": 64860.04729236297
+        },
+        {
+          "date": "2026-09-13",
+          "price": 76759.2585653887,
+          "ma50": 79633.18640571945,
+          "ma200": 65162.241093502314
+        },
+        {
+          "date": "2026-09-20",
+          "price": 81194.7440397662,
+          "ma50": 78786.60592023774,
+          "ma200": 65486.98059020465
+        },
+        {
+          "date": "2026-09-27",
+          "price": 84392.4723819229,
+          "ma50": 78171.39702697612,
+          "ma200": 65826.76259827003
+        },
+        {
+          "date": "2026-10-04",
+          "price": 86520.8001186441,
+          "ma50": 77727.67975407139,
+          "ma200": 66173.75802395091
+        },
+        {
+          "date": "2026-10-11",
+          "price": 83636.6057580362,
+          "ma50": 77109.26986002113,
+          "ma200": 66506.46924944478
+        },
+        {
+          "date": "2026-10-18",
+          "price": 81935.1692647925,
+          "ma50": 76540.18987277459,
+          "ma200": 66832.26451614132
+        },
+        {
+          "date": "2026-10-25",
+          "price": 80038.9058032613,
+          "ma50": 76047.25708002043,
+          "ma200": 67148.33485028915
+        },
+        {
+          "date": "2026-11-01",
+          "price": 78135.0802893045,
+          "ma50": 75726.31242381354,
+          "ma200": 67455.97649151941
+        },
+        {
+          "date": "2026-11-08",
+          "price": 74967.7164066861,
+          "ma50": 75488.217658686,
+          "ma200": 67745.51887383046
+        },
+        {
+          "date": "2026-11-15",
+          "price": 65189.110705488,
+          "ma50": 74979.8458297683,
+          "ma200": 67967.08438457736
+        }
+      ],
+      "cycleHistory": [
+        {
+          "cycle": "2013–2015",
+          "peakDate": "2013-12-04",
+          "peakUsd": 1134.93223088837,
+          "lowDate": "2015-01-14",
+          "lowUsd": 175.637640561075,
+          "drawdownPct": -84.52439398750758,
+          "daysToLow": 406,
+          "halvingDate": "2012-11-28",
+          "daysFromHalvingToPeak": 371
+        },
+        {
+          "cycle": "2017–2018",
+          "peakDate": "2017-12-16",
+          "peakUsd": 19640.5138834015,
+          "lowDate": "2018-12-15",
+          "lowUsd": 3185.07404383402,
+          "drawdownPct": -83.78314303412512,
+          "daysToLow": 364,
+          "halvingDate": "2016-07-09",
+          "daysFromHalvingToPeak": 525
+        },
+        {
+          "cycle": "2021–2022",
+          "peakDate": "2021-11-08",
+          "peakUsd": 67541.7555081824,
+          "lowDate": "2022-11-09",
+          "lowUsd": 15758.2912819988,
+          "drawdownPct": -76.66881595920356,
+          "daysToLow": 366,
+          "halvingDate": "2020-05-11",
+          "daysFromHalvingToPeak": 546
+        }
+      ],
+      "methodology": "Coin Metrics PriceUSD UTC daily close; weekly closes sampled on Sunday, completed days only; current low is provisional",
+      "cycleCoverageComplete": true,
+      "contiguousRecentDays": true
+    },
+    "etf": {
+      "BTC": {
+        "asOf": "2026-11-13",
+        "dayNetUsd": -185400000,
+        "fiveSessionNetUsd": -1065300000,
+        "twentySessionNetUsd": -2244600000,
+        "fiveSessionMissingDates": [],
+        "twentySessionMissingDates": [],
+        "fiveSessionFrom": "2026-11-09",
+        "twentySessionFrom": "2026-10-19",
+        "sessionCount": 160,
+        "last20": [
+          {
+            "date": "2026-10-19",
+            "totalUsd": 526700000
+          },
+          {
+            "date": "2026-10-20",
+            "totalUsd": 23200000
+          },
+          {
+            "date": "2026-10-21",
+            "totalUsd": 528400000
+          },
+          {
+            "date": "2026-10-22",
+            "totalUsd": -635600000
+          },
+          {
+            "date": "2026-10-23",
+            "totalUsd": -137900000
+          },
+          {
+            "date": "2026-10-26",
+            "totalUsd": 110300000
+          },
+          {
+            "date": "2026-10-27",
+            "totalUsd": 176000000
+          },
+          {
+            "date": "2026-10-28",
+            "totalUsd": 137300000
+          },
+          {
+            "date": "2026-10-29",
+            "totalUsd": 17200000
+          },
+          {
+            "date": "2026-10-30",
+            "totalUsd": -643200000
+          },
+          {
+            "date": "2026-11-02",
+            "totalUsd": -398600000
+          },
+          {
+            "date": "2026-11-03",
+            "totalUsd": -115600000
+          },
+          {
+            "date": "2026-11-04",
+            "totalUsd": 74600000
+          },
+          {
+            "date": "2026-11-05",
+            "totalUsd": -430200000
+          },
+          {
+            "date": "2026-11-06",
+            "totalUsd": -411900000
+          },
+          {
+            "date": "2026-11-09",
+            "totalUsd": -201000000
+          },
+          {
+            "date": "2026-11-10",
+            "totalUsd": -95000000
+          },
+          {
+            "date": "2026-11-11",
+            "totalUsd": -299800000
+          },
+          {
+            "date": "2026-11-12",
+            "totalUsd": -284100000
+          },
+          {
+            "date": "2026-11-13",
+            "totalUsd": -185400000
+          }
+        ],
+        "pendingDates": [],
+        "latestPending": false,
+        "provider": "The Block",
+        "url": "https://data.tbstat.com/dashboard/markets_structuredproducts_btcspotetfflows_daily_other.json",
+        "fundCount": 12,
+        "missingFunds": [],
+        "unknownFunds": [],
+        "fundCoverageIncomplete": false,
+        "expectedAsOf": "2026-11-13",
+        "topBuyers5": [
+          {
+            "fund": "MSBT",
+            "netUsd": 54400000
+          }
+        ],
+        "topSellers5": [
+          {
+            "fund": "IBIT",
+            "netUsd": -908400000
+          },
+          {
+            "fund": "FBTC",
+            "netUsd": -111300000
+          },
+          {
+            "fund": "GBTC",
+            "netUsd": -39100000
+          }
+        ],
+        "scope": "Published provider fund universe, US-listed spot ETF net creations/redemptions; not all institutional trading and not fund-manager own-account bets"
+      },
+      "ETH": {
+        "asOf": "2026-11-13",
+        "dayNetUsd": 2300000,
+        "fiveSessionNetUsd": -374300000,
+        "twentySessionNetUsd": -1297100000,
+        "fiveSessionMissingDates": [],
+        "twentySessionMissingDates": [],
+        "fiveSessionFrom": "2026-11-09",
+        "twentySessionFrom": "2026-10-19",
+        "sessionCount": 160,
+        "last20": [
+          {
+            "date": "2026-10-19",
+            "totalUsd": -103300000
+          },
+          {
+            "date": "2026-10-20",
+            "totalUsd": -26100000
+          },
+          {
+            "date": "2026-10-21",
+            "totalUsd": 13600000
+          },
+          {
+            "date": "2026-10-22",
+            "totalUsd": -93400000
+          },
+          {
+            "date": "2026-10-23",
+            "totalUsd": 3600000
+          },
+          {
+            "date": "2026-10-26",
+            "totalUsd": -88600000
+          },
+          {
+            "date": "2026-10-27",
+            "totalUsd": -60200000
+          },
+          {
+            "date": "2026-10-28",
+            "totalUsd": -22400000
+          },
+          {
+            "date": "2026-10-29",
+            "totalUsd": -89900000
+          },
+          {
+            "date": "2026-10-30",
+            "totalUsd": -135500000
+          },
+          {
+            "date": "2026-11-02",
+            "totalUsd": -138300000
+          },
+          {
+            "date": "2026-11-03",
+            "totalUsd": -85300000
+          },
+          {
+            "date": "2026-11-04",
+            "totalUsd": 75300000
+          },
+          {
+            "date": "2026-11-05",
+            "totalUsd": -77900000
+          },
+          {
+            "date": "2026-11-06",
+            "totalUsd": -94400000
+          },
+          {
+            "date": "2026-11-09",
+            "totalUsd": -163400000
+          },
+          {
+            "date": "2026-11-10",
+            "totalUsd": -2000000
+          },
+          {
+            "date": "2026-11-11",
+            "totalUsd": -139500000
+          },
+          {
+            "date": "2026-11-12",
+            "totalUsd": -71700000
+          },
+          {
+            "date": "2026-11-13",
+            "totalUsd": 2300000
+          }
+        ],
+        "pendingDates": [],
+        "latestPending": false,
+        "provider": "The Block",
+        "url": "https://data.tbstat.com/dashboard/markets_structuredproducts_ethspotetfflows_daily_other.json",
+        "fundCount": 8,
+        "missingFunds": [
+          "ETHB",
+          "TETH",
+          "MSSE"
+        ],
+        "unknownFunds": [],
+        "fundCoverageIncomplete": true,
+        "expectedAsOf": "2026-11-13",
+        "topBuyers5": [
+          {
+            "fund": "QETH",
+            "netUsd": 400000
+          }
+        ],
+        "topSellers5": [
+          {
+            "fund": "ETHA",
+            "netUsd": -311100000
+          },
+          {
+            "fund": "ETH",
+            "netUsd": -43000000
+          },
+          {
+            "fund": "FETH",
+            "netUsd": -12100000
+          }
+        ],
+        "scope": "Published provider fund universe, US-listed spot ETF net creations/redemptions; not all institutional trading and not fund-manager own-account bets"
+      }
+    }
+  },
+  "bottomConfirmation": {
+    "phase": "反轉條件尚未成立",
+    "asOf": "2026-11-15",
+    "weeklyAsOf": "2026-11-15",
+    "rules": [
+      {
+        "id": "ma200",
+        "label": "連續兩週站穩200週線",
+        "status": "not_passed",
+        "asOf": "2026-11-15",
+        "reason": "最近兩週尚未都收在各自均線上方。"
+      },
+      {
+        "id": "ma50",
+        "label": "連續兩週站穩50週線且均線不再下降",
+        "status": "not_passed",
+        "asOf": "2026-11-15",
+        "reason": "最近兩週尚未都收在各自均線上方。"
+      },
+      {
+        "id": "btcEtf",
+        "label": "BTC ETF近5與20個完整交易日均淨流入",
+        "status": "not_passed",
+        "asOf": "2026-11-13",
+        "reason": "至少一個窗口尚非淨流入。"
+      }
+    ],
+    "methodology": "候選確認條件，未經機率校準或完整樣本外回測；即使全部通過，也不保證已見底。",
+    "invalidation": {
+      "referenceLowDate": "2026-06-30",
+      "referenceLowUsd": 58525.0753614845,
+      "conditions": [
+        "後續日收盤跌破暫定低點",
+        "收復均線後再次失守",
+        "ETF資金再次持續淨流出"
+      ]
+    }
+  },
+  "whaleAlignment": {
+    "rows": [
+      {
+        "address": "0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36",
+        "name": "BTC大佬",
+        "asOf": "2026-11-16T16:38:27.413Z",
+        "from": "2026-11-16T07:50:00.506Z",
+        "markets": {
+          "BTC": {
+            "action": "cover_short",
+            "direction": "short",
+            "delta": 338.84999999999997,
+            "text": "空單回補100%"
+          },
+          "ETH": {
+            "action": "unchanged",
+            "direction": "short",
+            "delta": 0,
+            "text": "空持平"
+          },
+          "GOLD": {
+            "action": "cover_short",
+            "direction": "short",
+            "delta": 6116.1086,
+            "text": "空單回補100%"
+          }
+        }
+      },
+      {
+        "address": "0x5b5d51203a0f9079f8aeb098a6523a13f298c060",
+        "name": "ETH大佬",
+        "asOf": "2026-11-16T16:38:27.804Z",
+        "from": "2026-11-16T07:50:01.199Z",
+        "markets": {
+          "BTC": {
+            "action": "cover_short",
+            "direction": "short",
+            "delta": 869.2317899999999,
+            "text": "空單回補99.6%"
+          },
+          "ETH": {
+            "action": "cover_short",
+            "direction": "short",
+            "delta": 2665,
+            "text": "空單回補100%"
+          },
+          "GOLD": {
+            "action": "cover_short",
+            "direction": "short",
+            "delta": 6406.7088,
+            "text": "空單回補99.9%"
+          }
+        }
+      },
+      {
+        "address": "0x46921f6961bdb411b756c9712f6bdb58fbd9164f",
+        "name": "黃金大佬",
+        "asOf": "2026-11-16T16:38:28.079Z",
+        "from": "2026-11-16T07:50:01.531Z",
+        "markets": {
+          "BTC": {
+            "action": "unchanged",
+            "direction": "flat",
+            "delta": 0,
+            "text": "無倉持平"
+          },
+          "ETH": {
+            "action": "unchanged",
+            "direction": "flat",
+            "delta": 0,
+            "text": "無倉持平"
+          },
+          "GOLD": {
+            "action": "add_short",
+            "direction": "short",
+            "delta": -199.54760000000078,
+            "text": "空單加倉2.7%"
+          }
+        }
+      }
+    ],
+    "btcAlignment": "兩位加密大佬都往回補BTC空單方向移動，仍為空頭。",
+    "goldDirectionSplit": false,
+    "goldAdjustmentSplit": true,
+    "scope": "僅三個可見地址及本期數量比較，不代表全市場或完整資產組合。"
+  },
+  "strategyAsOf": "2026-11-16T16:38:23.263Z",
   "strategyStatus": "策略資料已增量更新。",
   "usage": {
     "sqlCalls": 2,
