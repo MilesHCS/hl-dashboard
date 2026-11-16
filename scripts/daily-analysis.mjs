@@ -2,6 +2,8 @@ import fs from 'node:fs/promises';
 import { review } from './swing-context.mjs';
 import { refreshStrategyCache } from './strategy-data.mjs';
 import { describeStrategy, summarizeTraders } from './strategy-report.mjs';
+import { refreshMarketContext } from './market-context-data.mjs';
+import { describeMarketContext } from './market-context-report.mjs';
 
 const DAY = 86400000;
 const now = Date.now();
@@ -16,6 +18,7 @@ const traders = [
 ];
 const historyPath = 'analysis/observations.json';
 const cachePath = 'analysis/strategy-cache.json';
+const marketCachePath = 'analysis/market-context-cache.json';
 const archiveDirectory = 'analysis/daily';
 const history = JSON.parse(await fs.readFile(historyPath, 'utf8'));
 const storedCache = JSON.parse(await fs.readFile(cachePath, 'utf8'));
@@ -63,6 +66,12 @@ const refreshed = await refreshStrategyCache({
 });
 const cache = refreshed.cache;
 console.log('Strategy query calls:', refreshed.calls, refreshed.status);
+
+let storedMarketCache = {};
+try { storedMarketCache = JSON.parse(await fs.readFile(marketCachePath, 'utf8')); }
+catch (error) { console.warn('Market background cache unavailable:', error.code ?? 'invalid JSON'); }
+const marketRefreshed = await refreshMarketContext({ cache: storedMarketCache, now });
+console.log('Market background sources:', JSON.stringify(marketRefreshed.context.sources));
 
 const mids = [await info({ type: 'allMids' }), await info({ type: 'allMids', dex: 'xyz' })];
 const contexts = [];
@@ -134,6 +143,11 @@ for (const [user, name, focus] of traders) {
   history.events[user] = events;
 }
 const summary = summarizeTraders(feed, now);
+const marketReview = describeMarketContext({ context: marketRefreshed.context, feed, now });
+summary.marketContext = marketRefreshed.context;
+summary.bottomConfirmation = marketReview.bottomConfirmation;
+summary.whaleAlignment = marketReview.whaleAlignment;
+summary.report += '\n\n' + marketReview.report;
 summary.strategyAsOf = cache.toISO;
 summary.strategyStatus = refreshed.status;
 summary.usage = { sqlCalls: refreshed.calls, estimatedCredits: refreshed.calls * 10 };
@@ -143,6 +157,7 @@ for (const entry of [...Object.values(feed), summary]) {
 }
 
 await fs.writeFile(cachePath, JSON.stringify(cache) + '\n');
+await fs.writeFile(marketCachePath, JSON.stringify(marketRefreshed.cache) + '\n');
 await fs.writeFile(historyPath, JSON.stringify(history) + '\n');
 await fs.writeFile('analysis/latest.json', JSON.stringify(feed, null, 2) + '\n');
 await fs.writeFile('analysis/summary.json', JSON.stringify(summary, null, 2) + '\n');

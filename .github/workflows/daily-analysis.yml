@@ -28,6 +28,9 @@ jobs:
           node --check scripts/daily-analysis.mjs
           node --check scripts/strategy-data.mjs
           node --check scripts/strategy-report.mjs
+          node --check scripts/market-context-data.mjs
+          node --check scripts/market-context-report.mjs
+          node --test scripts/test-market-context-data.mjs scripts/test-market-context-report.mjs
       - name: Fetch positions and save reports
         env:
           IRONFLOW_API_KEY: ${{ secrets.IRONFLOW_API_KEY }}
@@ -35,7 +38,7 @@ jobs:
           node scripts/daily-analysis.mjs
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add analysis/latest.json analysis/summary.json analysis/strategy-cache.json analysis/observations.json analysis/daily/
+          git add analysis/latest.json analysis/summary.json analysis/strategy-cache.json analysis/market-context-cache.json analysis/observations.json analysis/daily/
           git commit -m "Publish daily whale positions"
           git push origin HEAD:main
       - name: Prepare dashboard
