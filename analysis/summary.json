@@ -1,27 +1,18 @@
 {
   "name": "三個地址綜合結論",
-  "updatedAt": "2026-11-16T16:42:37.946Z",
+  "updatedAt": "2026-11-17T08:58:02.495Z",
   "from": "2026-11-16T07:50:00.506Z",
-  "report": "BTC大佬和 ETH大佬都減少 BTC 空單，加密空頭曝險正在收縮。BTC大佬的 BTC 回補比例較大或相近。\n\n本期差異：BTC大佬的BTC減少空單約 100%；ETH大佬的ETH減少空單約 100%；黃金大佬的黃金增加空單約 2.7%。\n\n黃金比較：三個地址均保留黃金空頭。本期有人回補、有人加空，調倉方向出現分歧。\n\n下一期重點：觀察價格反彈接近 MA20 時，兩位加密交易者是否重新加空，或仍持續回補；再看黃金是否同步收縮。這能逐步區分階段性調整與更持續的方向改變。\n\n風險與資料：HYPE 現貨／永續配對主要抵銷該資產的部分曝險。跨地址同向操作與近月均線關聯，仍需更長行情和整體部位核對。各地址的實際比較時段見個別日報。\n\n週期位階：BTC日收盤約65,189美元，今年-25.5%；距本輪最高收盤-47.8%，目前最深回撤-53.1%。\n\n資料日距高點約405天，歷史三輪到低點約364–406天。時間相似不等於已見底；本輪低點仍暫定，最終跌幅未定。\n\n底部候選規則（50／200週線約74,980美元／67,967美元，隨週更新）：連續兩週站穩200週線【未通過】；連續兩週站穩50週線且均線不再下降【未通過】；BTC ETF近5與20個完整交易日均淨流入【未通過】。反轉條件尚未成立。規則未經完整回測或機率校準，全部通過也不保證見底。\n\nBTC ETF：近5／20完整交易日淨流出10.7億美元／淨流出22.4億美元。ETH ETF（The Block已涵蓋8檔，非全體）：近5／20完整交易日淨流出3.7億美元／淨流出13億美元。\n\nBTC近5完整交易日：主要淨申購MSBT、主要淨贖回IBIT。ETH近5完整交易日：主要淨申購QETH、主要淨贖回ETHA。\n\n大戶本期方向（快照截至11/17 00:42台灣時間）：\nBTC大佬：BTC空單回補接近100%；ETH空持平；GOLD空單回補接近100%。\nETH大佬：BTC空單回補99.6%；ETH空單回補接近100%；GOLD空單回補99.9%。\n黃金大佬：BTC無倉持平；ETH無倉持平；GOLD空單加倉2.7%。\n\n兩位加密大佬均大幅回補BTC空單，剩餘均不到前期1%；尚未翻多，也不代表維持原有看空強度。BTC大佬與黃金大佬的黃金加減倉方向分歧。\n\n交叉判讀：兩位已大幅退出BTC空頭，殘餘均不到前期1%；尚未翻多，也不代表維持原有看空強度。已報ETF5／20日流出，長週線修復條件未過。若後續維持小倉或無倉，較符合降風險或觀望的候選情境，仍缺資金與趨勢支持翻多。資料日期不同，不推因果，仍需後續驗證。\n\n下一期驗證：看週收盤能否站穩均線、ETF能否持續轉流入，並觀察大戶是否保留新方向。若日收盤跌破暫定低點（2026-06-30，58,525美元）、再失守均線或ETF持續流出，修復推論需下修。\n\n資料時間：BTC價格 2026-11-15（已更新）；BTC ETF 2026-11-13（已更新）；ETH ETF 2026-11-13（已更新）。週線截至2026-11-15。\n\n範圍：大戶只按數量變化判斷；回補不等於翻多，其他帳戶或現貨可能對沖。ETF淨申贖僅代表一項機構通道，含套利需求，亦未涵蓋企業、黃金基金等全部機構；三地址不代表全市場。\n\n策略資料已增量更新。",
+  "report": "BTC 比較基準或部位方向尚未一致，以下分別觀察可核對的變化。\n\n本期差異：BTC大佬的BTC已平掉原有部位；ETH大佬的ETH已平掉原有部位；黃金大佬的黃金增加空單約 2.8%。\n\n黃金比較：三個地址的黃金持倉方向存在差異。本期有人回補、有人加空，調倉方向出現分歧。\n\n下一期重點：觀察價格反彈接近 MA20 時，兩位加密交易者是否重新加空，或仍持續回補；再看黃金是否同步收縮。這能逐步區分階段性調整與更持續的方向改變。\n\n風險與資料：HYPE 現貨／永續配對主要抵銷該資產的部分曝險。跨地址同向操作與近月均線關聯，仍需更長行情和整體部位核對。各地址的實際比較時段見個別日報。\n\n週期位階：BTC日收盤約64,943美元，今年-25.8%；距本輪最高收盤-48%，目前最深回撤-53.1%。\n\n資料日距高點約406天，歷史三輪到低點約364–406天。時間相似不等於已見底；本輪低點仍暫定，最終跌幅未定。\n\n底部候選規則（50／200週線約74,980美元／67,967美元，隨週更新）：連續兩週站穩200週線【未通過】；連續兩週站穩50週線且均線不再下降【未通過】；BTC ETF近5與20個完整交易日均淨流入【資料不足】。確認資料未齊。規則未經完整回測或機率校準，全部通過也不保證見底。\n\nBTC ETF：近5／20完整交易日淨流出10.7億美元／淨流出22.4億美元。較新日期未報齊，未當成零流量。ETH ETF（The Block已涵蓋8檔，非全體）：近5／20完整交易日淨流出3.7億美元／淨流出13億美元。較新日期未報齊，未當成零流量。\n\nBTC近5完整交易日：主要淨申購MSBT、主要淨贖回IBIT。ETH近5完整交易日：主要淨申購QETH、主要淨贖回ETHA。\n\n大戶本期方向（快照截至11/17 16:58台灣時間）：\nBTC大佬：BTC空單平倉；ETH空單平倉；GOLD空單平倉。\nETH大佬：BTC空單平倉；ETH空單平倉；GOLD空單平倉。\n黃金大佬：BTC無倉持平；ETH無倉持平；GOLD空單加倉2.8%。\n\n兩位加密大佬的BTC數量都向多方移動，現有方向另看個別部位。BTC大佬與黃金大佬的黃金持倉方向分歧。\n\n交叉判讀：地址向多方調整與ETF流出並存，長週線修復條件未過，承接仍待確認。僅對照已報／舊窗口，不能判斷今日機構方向。資料日期不同，不推因果，仍需後續驗證。\n\n下一期驗證：看週收盤能否站穩均線、ETF能否持續轉流入，並觀察大戶是否保留新方向。若日收盤跌破暫定低點（2026-06-30，58,525美元）、再失守均線或ETF持續流出，修復推論需下修。\n\n資料時間：BTC價格 2026-11-16（已更新）；BTC ETF 2026-11-13（已更新）；ETH ETF 2026-11-13（已更新）。週線截至2026-11-15。\n\n範圍：大戶只按數量變化判斷；回補不等於翻多，其他帳戶或現貨可能對沖。ETF淨申贖僅代表一項機構通道，含套利需求，亦未涵蓋企業、黃金基金等全部機構；三地址不代表全市場。\n\n策略資料已增量更新。",
   "marketContext": {
-    "generatedAt": "2026-11-16T16:42:31.277Z",
+    "generatedAt": "2026-11-17T08:57:58.057Z",
     "sources": {
-      "prices": {
-        "status": "updated",
-        "asOf": "2026-11-15",
-        "ageDays": 1,
-        "stale": false,
-        "fetchedAt": "2026-11-16T16:42:31.277Z",
-        "checkedAt": "2026-11-16T16:42:31.277Z",
-        "url": "https://community-api.coinmetrics.io/v4/timeseries/asset-metrics?assets=btc&metrics=PriceUSD&frequency=1d&start_time=2026-11-08&end_time=2026-11-16&page_size=10000"
-      },
       "ethEtf": {
         "status": "updated",
         "asOf": "2026-11-13",
-        "ageDays": 3,
+        "ageDays": 4,
         "stale": false,
-        "fetchedAt": "2026-11-16T16:42:31.277Z",
-        "checkedAt": "2026-11-16T16:42:31.277Z",
+        "fetchedAt": "2026-11-17T08:57:58.057Z",
+        "checkedAt": "2026-11-17T08:57:58.057Z",
         "url": "https://data.tbstat.com/dashboard/markets_structuredproducts_ethspotetfflows_daily_other.json",
         "provider": "The Block",
         "primaryError": "HTTP 403"
@@ -29,19 +20,28 @@
       "btcEtf": {
         "status": "updated",
         "asOf": "2026-11-13",
-        "ageDays": 3,
+        "ageDays": 4,
         "stale": false,
-        "fetchedAt": "2026-11-16T16:42:31.277Z",
-        "checkedAt": "2026-11-16T16:42:31.277Z",
+        "fetchedAt": "2026-11-17T08:57:58.057Z",
+        "checkedAt": "2026-11-17T08:57:58.057Z",
         "url": "https://data.tbstat.com/dashboard/markets_structuredproducts_btcspotetfflows_daily_other.json",
         "provider": "The Block",
         "primaryError": "HTTP 403"
+      },
+      "prices": {
+        "status": "updated",
+        "asOf": "2026-11-16",
+        "ageDays": 1,
+        "stale": false,
+        "fetchedAt": "2026-11-17T08:57:58.057Z",
+        "checkedAt": "2026-11-17T08:57:58.057Z",
+        "url": "https://community-api.coinmetrics.io/v4/timeseries/asset-metrics?assets=btc&metrics=PriceUSD&frequency=1d&start_time=2026-11-08&end_time=2026-11-17&page_size=10000"
       }
     },
     "btc": {
-      "asOf": "2026-11-15",
-      "priceUsd": 65189.110705488,
-      "yearReturnPct": -25.51261233287976,
+      "asOf": "2026-11-16",
+      "priceUsd": 64942.5103492928,
+      "yearReturnPct": -25.794386637391252,
       "peak": {
         "date": "2025-10-06",
         "price": 124824.453666861
@@ -50,10 +50,10 @@
         "date": "2026-06-30",
         "price": 58525.0753614845
       },
-      "drawdownPct": -47.775368695409135,
+      "drawdownPct": -47.9729264246449,
       "maxDrawdownPct": -53.11409452054985,
-      "daysSincePeak": 405,
-      "calendarDaysSincePeak": 406,
+      "daysSincePeak": 406,
+      "calendarDaysSincePeak": 407,
       "daysToLow": 267,
       "weeklyAsOf": "2026-11-15",
       "ma50WeekUsd": 74979.8458297683,
@@ -337,15 +337,17 @@
             "totalUsd": -185400000
           }
         ],
-        "pendingDates": [],
-        "latestPending": false,
+        "pendingDates": [
+          "2026-11-16"
+        ],
+        "latestPending": true,
         "provider": "The Block",
         "url": "https://data.tbstat.com/dashboard/markets_structuredproducts_btcspotetfflows_daily_other.json",
         "fundCount": 12,
         "missingFunds": [],
         "unknownFunds": [],
         "fundCoverageIncomplete": false,
-        "expectedAsOf": "2026-11-13",
+        "expectedAsOf": "2026-11-16",
         "topBuyers5": [
           {
             "fund": "MSBT",
@@ -460,8 +462,10 @@
             "totalUsd": 2300000
           }
         ],
-        "pendingDates": [],
-        "latestPending": false,
+        "pendingDates": [
+          "2026-11-16"
+        ],
+        "latestPending": true,
         "provider": "The Block",
         "url": "https://data.tbstat.com/dashboard/markets_structuredproducts_ethspotetfflows_daily_other.json",
         "fundCount": 8,
@@ -472,7 +476,7 @@
         ],
         "unknownFunds": [],
         "fundCoverageIncomplete": true,
-        "expectedAsOf": "2026-11-13",
+        "expectedAsOf": "2026-11-16",
         "topBuyers5": [
           {
             "fund": "QETH",
@@ -498,8 +502,8 @@
     }
   },
   "bottomConfirmation": {
-    "phase": "反轉條件尚未成立",
-    "asOf": "2026-11-15",
+    "phase": "確認資料未齊",
+    "asOf": "2026-11-16",
     "weeklyAsOf": "2026-11-15",
     "rules": [
       {
@@ -519,9 +523,9 @@
       {
         "id": "btcEtf",
         "label": "BTC ETF近5與20個完整交易日均淨流入",
-        "status": "not_passed",
+        "status": "insufficient",
         "asOf": "2026-11-13",
-        "reason": "至少一個窗口尚非淨流入。"
+        "reason": "交易日窗口仍有缺報，暫不確認。"
       }
     ],
     "methodology": "候選確認條件，未經機率校準或完整樣本外回測；即使全部通過，也不保證已見底。",
@@ -540,64 +544,59 @@
       {
         "address": "0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36",
         "name": "BTC大佬",
-        "asOf": "2026-11-16T16:42:37.946Z",
+        "asOf": "2026-11-17T08:58:02.495Z",
         "from": "2026-11-16T07:50:00.506Z",
         "markets": {
           "BTC": {
-            "action": "cover_short",
-            "direction": "short",
-            "delta": 338.84999999999997,
-            "remainingFraction": 0.00001885754611267623,
-            "text": "空單回補接近100%"
+            "action": "close_short",
+            "direction": "flat",
+            "delta": 338.85639,
+            "text": "空單平倉"
           },
           "ETH": {
-            "action": "unchanged",
-            "direction": "short",
-            "delta": 0,
-            "text": "空持平"
+            "action": "close_short",
+            "direction": "flat",
+            "delta": 6.1599,
+            "text": "空單平倉"
           },
           "GOLD": {
-            "action": "cover_short",
-            "direction": "short",
-            "delta": 6116.1086,
-            "remainingFraction": 0.000015385363209103584,
-            "text": "空單回補接近100%"
+            "action": "close_short",
+            "direction": "flat",
+            "delta": 6116.2027,
+            "text": "空單平倉"
           }
         }
       },
       {
         "address": "0x5b5d51203a0f9079f8aeb098a6523a13f298c060",
         "name": "ETH大佬",
-        "asOf": "2026-11-16T16:42:38.458Z",
+        "asOf": "2026-11-17T08:58:03.047Z",
         "from": "2026-11-16T07:50:01.199Z",
         "markets": {
           "BTC": {
-            "action": "cover_short",
-            "direction": "short",
-            "delta": 869.2317899999999,
-            "remainingFraction": 0.003759387121253017,
-            "text": "空單回補99.6%"
+            "action": "close_short",
+            "direction": "flat",
+            "delta": 872.5119,
+            "text": "空單平倉"
           },
           "ETH": {
-            "action": "cover_short",
-            "direction": "short",
-            "delta": 2665,
-            "remainingFraction": 0.0001748287166296625,
-            "text": "空單回補接近100%"
+            "action": "close_short",
+            "direction": "flat",
+            "delta": 2665.466,
+            "text": "空單平倉"
           },
           "GOLD": {
-            "action": "cover_short",
-            "direction": "short",
-            "delta": 6406.7088,
-            "remainingFraction": 0.0014728282827542903,
-            "text": "空單回補99.9%"
+            "action": "close_short",
+            "direction": "flat",
+            "delta": 6416.1587,
+            "text": "空單平倉"
           }
         }
       },
       {
         "address": "0x46921f6961bdb411b756c9712f6bdb58fbd9164f",
         "name": "黃金大佬",
-        "asOf": "2026-11-16T16:42:38.800Z",
+        "asOf": "2026-11-17T08:58:03.400Z",
         "from": "2026-11-16T07:50:01.531Z",
         "markets": {
           "BTC": {
@@ -615,20 +614,20 @@
           "GOLD": {
             "action": "add_short",
             "direction": "short",
-            "delta": -199.54760000000078,
-            "remainingFraction": 1.026978818391688,
-            "text": "空單加倉2.7%"
+            "delta": -206.1831000000002,
+            "remainingFraction": 1.027875937422125,
+            "text": "空單加倉2.8%"
           }
         }
       }
     ],
-    "btcAlignment": "兩位加密大佬均大幅回補BTC空單，剩餘均不到前期1%；尚未翻多，也不代表維持原有看空強度。",
-    "nearlyFlatShorts": true,
-    "goldDirectionSplit": false,
+    "btcAlignment": "兩位加密大佬的BTC數量都向多方移動，現有方向另看個別部位。",
+    "nearlyFlatShorts": false,
+    "goldDirectionSplit": true,
     "goldAdjustmentSplit": true,
     "scope": "僅三個可見地址及本期數量比較，不代表全市場或完整資產組合。"
   },
-  "strategyAsOf": "2026-11-16T16:42:31.277Z",
+  "strategyAsOf": "2026-11-17T08:57:58.057Z",
   "strategyStatus": "策略資料已增量更新。",
   "usage": {
     "sqlCalls": 2,
