@@ -4,6 +4,7 @@ import { refreshStrategyCache } from './strategy-data.mjs';
 import { describeStrategy, summarizeTraders } from './strategy-report.mjs';
 import { refreshMarketContext } from './market-context-data.mjs';
 import { describeMarketContext } from './market-context-report.mjs';
+import { describeForecastTracking } from './forecast-tracking.mjs';
 
 const DAY = 86400000;
 const now = Date.now();
@@ -27,6 +28,12 @@ const previousFiles = (await fs.readdir(archiveDirectory))
   .filter(name => /^\d{4}-\d{2}-\d{2}\.json$/.test(name) && name.slice(0, 10) < reportDate).sort();
 const previousArchive = previousFiles.length
   ? JSON.parse(await fs.readFile(archiveDirectory + '/' + previousFiles.at(-1), 'utf8')) : {};
+let previousForecast = null;
+try {
+  previousForecast = JSON.parse(await fs.readFile('analysis/summary.json', 'utf8')).forecastTracking ?? null;
+} catch (error) {
+  console.warn('Previous forecast reference unavailable:', error.code ?? 'invalid JSON');
+}
 
 function baseline(user) {
   if (previousArchive[user]) return previousArchive[user];
@@ -152,6 +159,25 @@ summary.strategyAsOf = cache.toISO;
 summary.strategyStatus = refreshed.status;
 summary.usage = { sqlCalls: refreshed.calls, estimatedCredits: refreshed.calls * 10 };
 summary.report += '\n\n' + refreshed.status;
+// Forecast nodes reuse the already-fetched reference quotes. No extra market,
+// Ironflow, video-transcription, or language-model requests are made here.
+try {
+  const registry = JSON.parse(await fs.readFile('analysis/forecast-nodes.json', 'utf8'));
+  summary.forecastTracking = describeForecastTracking({
+    registry, feed, previous: previousForecast, now: Date.now(),
+    maxReportChars: Math.min(900, Math.max(0, 3700 - summary.report.length - 2)),
+  });
+  if (summary.forecastTracking.report) summary.report += '\n\n' + summary.forecastTracking.report;
+} catch (error) {
+  console.warn('Forecast reference unavailable:', error.code ?? 'invalid registry or evaluation');
+  summary.forecastTracking = {
+    schemaVersion: 1, status: 'unavailable', evaluatedAt: new Date(now).toISOString(),
+    report: '影片節點參考：資料或計算未完成，不據此推論預測成立。',
+  };
+  if (summary.report.length + summary.forecastTracking.report.length + 2 <= 3700) {
+    summary.report += '\n\n' + summary.forecastTracking.report;
+  }
+}
 for (const entry of [...Object.values(feed), summary]) {
   if (entry.report.length > 3700) throw Error('Telegram report too long');
 }
@@ -169,3 +195,4 @@ for (const [path, content] of [
   catch (error) { if (error.code !== 'EEXIST') throw error; }
 }
 console.log('Published reports:', Object.keys(feed).length + 1);
+

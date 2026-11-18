@@ -1,0 +1,301 @@
+{
+  "schemaVersion": 1,
+  "registryAsOf": "2026-11-18",
+  "scope": ["BTC", "GOLD"],
+  "scopeNote": "影片沒有獨立的ETH預測，不把BTC、NASDAQ或黃金的路徑套用到ETH。重申同一劇本不增加獨立樣本數。",
+  "boundaryConvention": "原話before Thanksgiving只給事件日期、沒有鐘點；系統為追蹤統一採紐約2026/11/26 00:00（UTC05:00）為不含感恩節當日的日界，不冒稱作者指定該鐘點。短期價位節點的起日也僅取錄製後下一紐約日界，不代表已驗證公開上架或可交易時間。其餘日期都是追蹤用粗窗口。",
+  "methodology": "本登錄保留作者的候選說法，不作評分或機率校準。除明確的感恩節前3,500期限外，日期區間均為方便追蹤而設定的粗窗口，不是作者給定的精確交易起訖。所有end為exclusive。Hyperliquid參考價只能顯示價差或參考合約觀察，不能單獨證明原影片的COMEX GC是否在窗口內觸價；到期也不能以缺少同口徑資料推論未達。",
+  "nodes": [
+    {
+      "id": "btc-early-dec-low",
+      "asset": "BTC",
+      "market": "BTC",
+      "kind": "turn",
+      "label": "BTC偏弱至12月初／候選低點",
+      "claim": "11月底或12月初以前可能再跌，也可能橫盤；感恩節後或12月初附近可能形成低點。",
+      "confidence": "可能再跌或盤整、可能見低；不是保證單向下跌或已確認底部。",
+      "source": {
+        "recordedDate": "2026-11-03",
+        "videoTitle": "S&P Bottoming; NVDA, SOXX, Bitcoin, Crude Oil (to $30/barrel)",
+        "timestamp": "05:14–05:26；05:38–05:52",
+        "claimIds": ["B21", "B24", "R37", "P18"],
+        "reaffirmations": [
+          {"recordedDate": "2026-11-10", "timestamp": "11:05–11:10", "claimIds": ["R37"]},
+          {"recordedDate": "2026-11-16", "timestamp": "07:18–07:31", "claimIds": ["P18"]}
+        ]
+      },
+      "window": {
+        "start": "2026-11-27T05:00:00Z",
+        "end": "2026-12-11T05:00:00Z",
+        "timeZone": "America/New_York",
+        "label": "感恩節後／12月初；追蹤暫以11/27至12/10作粗窗口，非作者精確期限",
+        "precision": "coarse_window"
+      },
+      "sourceInstrument": "BTC unspecified market",
+      "dailyPriority": 2,
+      "direction": null
+    },
+    {
+      "id": "btc-feb-rally",
+      "asset": "BTC",
+      "market": "BTC",
+      "kind": "direction",
+      "label": "BTC候選低點後反彈至2027年2月",
+      "claim": "年底候選低點之後，BTC可能反彈至2027年2月，節奏可能與NASDAQ不同。",
+      "confidence": "候選反彈路徑，先有低點的順序尚待驗證；沒有口述確切價位。",
+      "source": {
+        "recordedDate": "2026-11-03",
+        "videoTitle": "S&P Bottoming; NVDA, SOXX, Bitcoin, Crude Oil (to $30/barrel)",
+        "timestamp": "05:26–05:31",
+        "claimIds": ["B22", "R38"],
+        "reaffirmations": [{"recordedDate": "2026-11-10", "timestamp": "11:10–11:18", "claimIds": ["R38"]}]
+      },
+      "window": {
+        "start": "2026-12-01T05:00:00Z",
+        "end": "2027-03-01T05:00:00Z",
+        "timeZone": "America/New_York",
+        "label": "低點後至2027年2月；追蹤暫以12月至2月底作粗窗口，非精確進出場日",
+        "precision": "coarse_window"
+      },
+      "sourceInstrument": "BTC unspecified market",
+      "dailyPriority": 5,
+      "direction": "up"
+    },
+    {
+      "id": "btc-mid-2027-weakness",
+      "asset": "BTC",
+      "market": "BTC",
+      "kind": "direction",
+      "label": "BTC反彈後再弱至2027年6或7月",
+      "claim": "2027年2月反彈之後，BTC可能再度下跌至6月或7月；11月10日的重述較接近約6月。",
+      "confidence": "未到期的多段候選路徑，沒有口述價位或精確轉折日。",
+      "source": {
+        "recordedDate": "2026-11-03",
+        "videoTitle": "S&P Bottoming; NVDA, SOXX, Bitcoin, Crude Oil (to $30/barrel)",
+        "timestamp": "05:31–05:38",
+        "claimIds": ["B23", "R38"],
+        "reaffirmations": [{"recordedDate": "2026-11-10", "timestamp": "11:10–11:18", "claimIds": ["R38"]}]
+      },
+      "window": {
+        "start": "2027-02-01T05:00:00Z",
+        "end": "2027-08-01T04:00:00Z",
+        "timeZone": "America/New_York",
+        "label": "2月反彈後至6或7月；追蹤暫以2至7月作粗窗口，非作者精確期限",
+        "precision": "coarse_window"
+      },
+      "sourceInstrument": "BTC unspecified market",
+      "dailyPriority": 8,
+      "direction": "down"
+    },
+    {
+      "id": "gold-3500-before-thanksgiving",
+      "asset": "GOLD",
+      "market": "xyz:GOLD",
+      "kind": "price",
+      "label": "黃金感恩節前3,500低信心情境",
+      "claim": "感恩節前黃金仍可能觸及3,500美元，但作者明說不太可能，若發生會感到意外。",
+      "confidence": "可能但不太可能；低信心替代情境，不是高機率必達目標。",
+      "source": {
+        "recordedDate": "2026-11-10",
+        "videoTitle": "S&P Rally, But Not Straight UP",
+        "timestamp": "10:24–10:34",
+        "claimIds": ["R34"]
+      },
+      "window": {
+        "start": "2026-11-11T05:00:00Z",
+        "end": "2026-11-26T05:00:00Z",
+        "timeZone": "America/New_York",
+        "label": "2026年感恩節之前；以紐約11/26開始為截止，不含感恩節當日",
+        "precision": "explicit_deadline",
+        "boundaryConvention": "作者只說感恩節前、未給鐘點；紐約11/26 00:00是系統選定的日界口徑。"
+      },
+      "targetUsd": 3500,
+      "comparator": "lte",
+      "sourceInstrument": "COMEX GC futures",
+      "dailyPriority": 1,
+      "direction": "down"
+    },
+    {
+      "id": "gold-thanksgiving-low",
+      "asset": "GOLD",
+      "market": "xyz:GOLD",
+      "kind": "turn",
+      "label": "黃金感恩節附近候選低點",
+      "claim": "黃金可能在感恩節附近形成低點，之後開始反彈。這是時間候選，與感恩節前3,500低機率價位情境分開。",
+      "confidence": "候選低點；作者未給單日或底部確認條件。",
+      "source": {
+        "recordedDate": "2026-11-16",
+        "videoTitle": "S&P Approaching a Major Low; NVDA, APPL, Bitcoin, Gold, Crude Oil",
+        "timestamp": "09:05–09:17",
+        "claimIds": ["P20", "R30"]
+      },
+      "window": {
+        "start": "2026-11-23T05:00:00Z",
+        "end": "2026-11-30T05:00:00Z",
+        "timeZone": "America/New_York",
+        "label": "感恩節附近；追蹤暫以11/23至11/29作粗窗口，非作者精確期限",
+        "precision": "coarse_window"
+      },
+      "sourceInstrument": "COMEX GC futures",
+      "dailyPriority": 3,
+      "direction": null
+    },
+    {
+      "id": "gold-feb-rally",
+      "asset": "GOLD",
+      "market": "xyz:GOLD",
+      "kind": "direction",
+      "label": "黃金低點後上行至2027年2月",
+      "claim": "感恩節附近候選低點之後，黃金可能先上行至2027年2月；不是直接一路漲到7月。",
+      "confidence": "候選反彈路徑，起點仍需實際行情確認，沒有本片口述確切目標價。",
+      "source": {
+        "recordedDate": "2026-11-16",
+        "videoTitle": "S&P Approaching a Major Low; NVDA, APPL, Bitcoin, Gold, Crude Oil",
+        "timestamp": "09:05–09:17",
+        "claimIds": ["P20"]
+      },
+      "window": {
+        "start": "2026-11-27T05:00:00Z",
+        "end": "2027-03-01T05:00:00Z",
+        "timeZone": "America/New_York",
+        "label": "感恩節低點後至2027年2月；起日與月底界線僅供追蹤，非精確訊號",
+        "precision": "coarse_window"
+      },
+      "sourceInstrument": "COMEX GC futures",
+      "dailyPriority": 4,
+      "direction": "up"
+    },
+    {
+      "id": "gold-may-pullback",
+      "asset": "GOLD",
+      "market": "xyz:GOLD",
+      "kind": "direction",
+      "label": "黃金2027年2月後回落至5月",
+      "claim": "在候選2月高點之後，黃金可能回落至2027年5月。",
+      "confidence": "多段候選路徑中的回檔，前一高點尚未確認，也未給幅度。",
+      "source": {
+        "recordedDate": "2026-11-16",
+        "videoTitle": "S&P Approaching a Major Low; NVDA, APPL, Bitcoin, Gold, Crude Oil",
+        "timestamp": "09:17–09:24",
+        "claimIds": ["P21"]
+      },
+      "window": {
+        "start": "2027-02-01T05:00:00Z",
+        "end": "2027-06-01T04:00:00Z",
+        "timeZone": "America/New_York",
+        "label": "2月高點後至5月；追蹤暫以2至5月作粗窗口，非作者精確期限",
+        "precision": "coarse_window"
+      },
+      "sourceInstrument": "COMEX GC futures",
+      "dailyPriority": 6,
+      "direction": "down"
+    },
+    {
+      "id": "gold-july-rally",
+      "asset": "GOLD",
+      "market": "xyz:GOLD",
+      "kind": "direction",
+      "label": "黃金2027年5月後再上行至7月",
+      "claim": "5月候選低點之後再上行至2027年7月，並可能與股票在年中附近共同見高。",
+      "confidence": "候選上行與跨市場同向關係，未保證共同單日見頂或永久相關。",
+      "source": {
+        "recordedDate": "2026-11-16",
+        "videoTitle": "S&P Approaching a Major Low; NVDA, APPL, Bitcoin, Gold, Crude Oil",
+        "timestamp": "09:17–09:44",
+        "claimIds": ["P21", "P22", "R30"]
+      },
+      "window": {
+        "start": "2027-05-01T04:00:00Z",
+        "end": "2027-08-01T04:00:00Z",
+        "timeZone": "America/New_York",
+        "label": "5月低點後至7月；追蹤暫以5至7月作粗窗口，非作者精確期限",
+        "precision": "coarse_window"
+      },
+      "sourceInstrument": "COMEX GC futures",
+      "dailyPriority": 7,
+      "direction": "up"
+    },
+    {
+      "id": "gold-late-2027-low",
+      "asset": "GOLD",
+      "market": "xyz:GOLD",
+      "kind": "turn",
+      "label": "黃金年中高點後可能於2027年底新低",
+      "claim": "2027年中高點之後，黃金可能再次大幅下跌，甚至在年底形成新低。",
+      "confidence": "可能情境；作者未精確定義新低的比較基準或單日。",
+      "source": {
+        "recordedDate": "2026-11-16",
+        "videoTitle": "S&P Approaching a Major Low; NVDA, APPL, Bitcoin, Gold, Crude Oil",
+        "timestamp": "09:24–09:44",
+        "claimIds": ["P22", "R31"]
+      },
+      "window": {
+        "start": "2027-07-01T04:00:00Z",
+        "end": "2028-01-01T05:00:00Z",
+        "timeZone": "America/New_York",
+        "label": "2027年中高點後至年底；追蹤粗窗口，新低比較基準未明定",
+        "precision": "coarse_window"
+      },
+      "sourceInstrument": "COMEX GC futures",
+      "dailyPriority": 9,
+      "direction": "down"
+    },
+    {
+      "id": "gold-2028-opportunity",
+      "asset": "GOLD",
+      "market": "xyz:GOLD",
+      "kind": "opportunity",
+      "label": "黃金2028年長線買入機會假說",
+      "claim": "作者認為2028年可能見到黃金的長期買入機會。",
+      "confidence": "遠期機會假說；未給單日、確切價位、買入確認或停損條件。",
+      "source": {
+        "recordedDate": "2026-11-16",
+        "videoTitle": "S&P Approaching a Major Low; NVDA, APPL, Bitcoin, Gold, Crude Oil",
+        "timestamp": "09:44–09:58",
+        "claimIds": ["P23"]
+      },
+      "window": {
+        "start": "2028-01-01T05:00:00Z",
+        "end": "2029-01-01T05:00:00Z",
+        "timeZone": "America/New_York",
+        "label": "2028年；整年只是追蹤粗窗口，不是精確買入訊號",
+        "precision": "coarse_window"
+      },
+      "sourceInstrument": "COMEX GC futures",
+      "dailyPriority": 11,
+      "direction": null
+    },
+    {
+      "id": "gold-3500-late-conditional",
+      "asset": "GOLD",
+      "market": "xyz:GOLD",
+      "kind": "price",
+      "label": "黃金3,500較晚替代期限（有前置條件）",
+      "claim": "若感恩節前沒有到3,500，作者另保留先反彈，再於2027年10至12月或更晚回落至3,500的替代情境。",
+      "confidence": "條件式替代情境，且較晚期限沒有封頂；不是原短期目標自動延期。",
+      "source": {
+        "recordedDate": "2026-11-10",
+        "videoTitle": "S&P Rally, But Not Straight UP",
+        "timestamp": "10:37–10:47",
+        "claimIds": ["R35"]
+      },
+      "window": {
+        "start": "2027-10-01T04:00:00Z",
+        "end": "2028-01-01T05:00:00Z",
+        "timeZone": "America/New_York",
+        "label": "2027年10至12月或更晚；年底只作追蹤分段，原說法沒有硬性截止",
+        "precision": "coarse_window",
+        "openEnded": true
+      },
+      "targetUsd": 3500,
+      "comparator": "lte",
+      "sourceInstrument": "COMEX GC futures",
+      "dailyPriority": 10,
+      "direction": "down",
+      "dependsOn": {
+        "id": "gold-3500-before-thanksgiving",
+        "condition": "not_reached"
+      }
+    }
+  ]
+}
