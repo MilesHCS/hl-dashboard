@@ -175,6 +175,16 @@
   .err .btn { display: inline-block; margin-top: 8px; padding: 6px 12px; border-radius: 8px; background: var(--accent); color: #fff; font-weight: 600; }
   footer { text-align: center; font-size: 12px; color: var(--muted); margin-top: 18px; }
   .skeleton { color: var(--muted); text-align: center; padding: 60px 0; }
+  /* Shared video forecast reference at the end of the analysis tab. */
+  .forecast-timeline { border-top: 1px solid var(--line); margin-top: 24px; padding-top: 20px; }
+  .forecast-timeline h3 { margin: 0 0 8px; font-size: 16px; }
+  .forecast-timeline p { margin: 0 0 12px; }
+  .forecast-timeline figure { margin: 0; }
+  .forecast-timeline .timeline-preview { display: block; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .forecast-timeline img { display: block; width: 100%; height: auto; background: #fbfcf8; }
+  .forecast-timeline figcaption { margin-top: 8px; font-size: 12px; color: var(--muted); }
+  .forecast-timeline .timeline-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .forecast-timeline .timeline-links a { display: inline-flex; align-items: center; min-height: 44px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--card-2); font-size: 13px; }
 </style>
 </head>
 <body>
@@ -252,12 +262,31 @@ const CONFIG = {
     } catch { reportError = true; }
     if (data && sortKey === "analysis") render();
   }
+  function forecastTimelinePanel() {
+    const assets = "./analysis/assets/forecast-timeline-2026-11-18";
+    return `<section class="forecast-timeline" aria-label="影片預測總時間軸">
+      <h3>影片預測總時間軸</h3>
+      <p class="small sec">四支影片對美股、科技股、BTC、黃金、原油與美債的預測，依時間並列，保留目標價、條件與修改版本。</p>
+      <figure>
+        <a class="timeline-preview" href="${assets}.png" target="_blank" rel="noopener noreferrer" aria-label="開啟完整預測時間軸，可放大閱讀">
+          <img src="${assets}-preview.webp" width="1600" height="1440" loading="lazy" decoding="async" alt="四支影片預測總時間軸，按六類資產分列，呈現2026年9月至2030年底的預測節點與版本修正。">
+        </a>
+        <figcaption>點圖開啟原尺寸，可用雙指放大。綠色為看漲、紅色為看跌、菱形為候選轉折；虛線代表條件、低信心或已標日期的舊版路徑。</figcaption>
+      </figure>
+      <div class="timeline-links">
+        <a href="${assets}.png" target="_blank" rel="noopener noreferrer">放大圖片 ↗</a>
+        <a href="${assets}.pdf" target="_blank" rel="noopener noreferrer">開啟／下載 PDF ↗</a>
+      </div>
+      <p class="small muted" style="margin:12px 0 0">製圖：2026/11/18；實際行情核對截至 2026/11/16。這是固定版本的預測參考圖，箭頭不代表實際走勢；時間區段非等比例。</p>
+    </section>`;
+  }
   function analysisPanel(user) {
+    const timeline = forecastTimelinePanel();
     const entry = reports?.[user.toLowerCase()];
-    if (!entry) return '<div class="empty">'+(reportError?'分析載入失敗，請重新整理。':reports?'此地址尚無日報。':'分析載入中…')+'</div>';
+    if (!entry) return '<div class="empty">'+(reportError?'分析載入失敗，請重新整理。':reports?'此地址尚無日報。':'分析載入中…')+'</div>'+timeline;
     const time = new Date(entry.updatedAt).toLocaleString("zh-TW",{timeZone:"Asia/Taipei",hour12:false});
     const combined = combinedReport?.report ? '<hr style="border:0;border-top:1px solid var(--line);margin:20px 0"><strong>三個地址綜合結論</strong><div class="small muted">'+esc(new Date(combinedReport.updatedAt).toLocaleString("zh-TW",{timeZone:"Asia/Taipei",hour12:false}))+' 台灣時間</div><div style="white-space:pre-line;line-height:1.65;margin-top:8px">'+esc(combinedReport.report)+'</div>' : '';
-    return '<div class="small muted">'+esc(entry.name)+' · '+esc(time)+' 台灣時間'+(reportError?' · 顯示上次資料':'')+'</div><div style="white-space:pre-line;line-height:1.65;margin-top:8px">'+esc(entry.report)+'</div>'+combined;
+    return '<div class="small muted">'+esc(entry.name)+' · '+esc(time)+' 台灣時間'+(reportError?' · 顯示上次資料':'')+'</div><div style="white-space:pre-line;line-height:1.65;margin-top:8px">'+esc(entry.report)+'</div>'+combined+timeline;
   }
   let sortKey = store.get("hl.sort", "value");
   if (sortKey === "recent") sortKey = "ops";
