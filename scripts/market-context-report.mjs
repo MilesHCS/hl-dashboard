@@ -1,10 +1,7 @@
+import { TRADERS, MARKETS } from './traders.mjs';
+
 const DAY = 86400000;
-const TRADERS = [
-  ['0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36', 'BTC大佬'],
-  ['0x5b5d51203a0f9079f8aeb098a6523a13f298c060', 'ETH大佬'],
-  ['0x46921f6961bdb411b756c9712f6bdb58fbd9164f', '黃金大佬'],
-];
-const MARKETS = ['BTC', 'ETH', 'GOLD'];
+const marketLabel = market => market === 'xyz:GOLD' ? 'GOLD' : market;
 const STATUS = { passed: '通過', not_passed: '未通過', insufficient: '資料不足' };
 const finite = value => typeof value === 'number' && Number.isFinite(value);
 const dateMs = value => typeof value === 'string' ? Date.parse(value) : NaN;
@@ -137,15 +134,16 @@ function bottomRules(context, now) {
 }
 
 function quantityChange(before, after) {
-  if (!finite(after)) return { action: 'unknown', direction: 'unknown', delta: null, text: '資料不足' };
+  const quantities = { before: finite(before) ? before : null, after: finite(after) ? after : null };
+  if (!finite(after)) return { ...quantities, action: 'unknown', direction: 'unknown', delta: null, text: '未知' };
   const direction = after > 0 ? 'long' : after < 0 ? 'short' : 'flat';
-  const side = after > 0 ? '多' : after < 0 ? '空' : '無倉';
-  if (!finite(before)) return { action: 'unknown', direction, delta: null, text: side + '，比較待補' };
+  const side = after > 0 ? '多' : after < 0 ? '空' : '空倉';
+  if (!finite(before)) return { ...quantities, action: 'baseline', direction, delta: null, text: side + '，新增基準' };
   const delta = after - before;
-  if (before === after) return { action: 'unchanged', direction, delta, text: side + '持平' };
-  if (after === 0) return { action: before > 0 ? 'close_long' : 'close_short', direction, delta, text: before > 0 ? '多單平倉' : '空單平倉' };
-  if (before === 0) return { action: after > 0 ? 'open_long' : 'open_short', direction, delta, text: '新開' + side };
-  if (before * after < 0) return { action: after > 0 ? 'reverse_long' : 'reverse_short', direction, delta, text: after > 0 ? '空轉多' : '多轉空' };
+  if (before === after) return { ...quantities, action: 'unchanged', direction, delta, text: side + '持平' };
+  if (after === 0) return { ...quantities, action: before > 0 ? 'close_long' : 'close_short', direction, delta, text: before > 0 ? '多單平倉' : '空單平倉' };
+  if (before === 0) return { ...quantities, action: after > 0 ? 'open_long' : 'open_short', direction, delta, text: '新開' + side };
+  if (before * after < 0) return { ...quantities, action: after > 0 ? 'reverse_long' : 'reverse_short', direction, delta, text: after > 0 ? '空轉多' : '多轉空' };
   const increased = Math.abs(after) > Math.abs(before);
   const remainingFraction = Math.abs(after) / Math.abs(before);
   const magnitude = Math.abs((remainingFraction - 1) * 100);
@@ -154,11 +152,49 @@ function quantityChange(before, after) {
     : magnitude < 0.1 ? '<0.1%' : round(magnitude, 1) + '%';
   const action = after > 0 ? increased ? 'add_long' : 'reduce_long' : increased ? 'add_short' : 'cover_short';
   const text = after > 0 ? '多單' + (increased ? '加倉' : '減倉') + ratio : '空單' + (increased ? '加倉' : '回補') + ratio;
-  return { action, direction, delta, remainingFraction, text };
+  return { ...quantities, action, direction, delta, remainingFraction, text };
 }
 
-function whales(feed) {
-  const rows = TRADERS.map(([address, name]) => {
+const ACTION_LABELS = {
+  add_long: '多加', reduce_long: '多減', add_short: '空加', cover_short: '空回補',
+  open_long: '開多', open_short: '開空', close_long: '平多', close_short: '平空',
+  reverse_long: '空轉多', reverse_short: '多轉空', unchanged: '持平',
+};
+
+function marketAlignment(rows, market) {
+  const items = rows.map(row => row.markets[market]);
+  const counts = { long: 0, short: 0, flat: 0, unknown: 0 };
+  const actionCounts = {};
+  for (const item of items) {
+    counts[item.direction]++;
+    actionCounts[item.action] = (actionCounts[item.action] ?? 0) + 1;
+  }
+  const comparedCount = items.filter(item => finite(item.delta)).length;
+  const baselineCount = actionCounts.baseline ?? 0;
+  const increasedCount = items.filter(item => finite(item.delta) && item.delta > 0).length;
+  const decreasedCount = items.filter(item => finite(item.delta) && item.delta < 0).length;
+  // Flat is absence of exposure, not the opposite side of a directional position.
+  const directionSplit = counts.long > 0 && counts.short > 0 ? true : counts.unknown ? null : false;
+  const adjustmentSplit = increasedCount > 0 && decreasedCount > 0 ? true : comparedCount < rows.length ? null : false;
+  const priorShorts = items.filter(item => item.before < 0);
+  const nearlyFlatShorts = priorShorts.length > 0 && comparedCount === rows.length && counts.long === 0
+    && priorShorts.every(item => item.action === 'cover_short'
+      && finite(item.remainingFraction) && item.remainingFraction < 0.01);
+  const actions = Object.entries(ACTION_LABELS).filter(([action]) => actionCounts[action])
+    .map(([action, label]) => label + actionCounts[action]);
+  if (baselineCount) actions.push('新增基準' + baselineCount);
+  const positionText = '多' + counts.long + '／空' + counts.short + '／空倉' + counts.flat
+    + (counts.unknown ? '／未知' + counts.unknown : '');
+  const splitText = (directionSplit ? '，多空分歧' : '') + (adjustmentSplit ? '，調倉方向分歧' : '');
+  let text = marketLabel(market) + '：' + positionText + '；'
+    + (actions.length ? actions.join('、') : '比較待補') + splitText + '。';
+  if (nearlyFlatShorts) text += priorShorts.length + '個原空頭回補後剩餘均不到前期1%；尚未翻多，也不代表維持原有看空強度。';
+  return { market, counts, actionCounts, comparedCount, baselineCount, increasedCount, decreasedCount,
+    directionSplit, adjustmentSplit, nearlyFlatShorts, priorShortCount: priorShorts.length, text };
+}
+
+export function buildWhaleAlignment(feed = {}) {
+  const rows = TRADERS.map(({ user: address, name }) => {
     const entry = feed?.[address];
     return {
       address, name, asOf: entry?.updatedAt ?? null, from: entry?.from ?? null,
@@ -166,30 +202,11 @@ function whales(feed) {
         quantityChange(entry?.previousQuantities?.[index], entry?.quantities?.[index])])),
     };
   });
-  const pair = rows.slice(0, 2).map(row => row.markets.BTC);
-  const nearlyFlatShorts = pair.every(item => item.action === 'cover_short'
-    && finite(item.remainingFraction) && item.remainingFraction < 0.01);
-  let btcAlignment = '兩位加密大佬的BTC方向或比較基準未齊。';
-  if (pair.every(item => finite(item.delta))) {
-    if (pair.every(item => item.delta > 0)) {
-      btcAlignment = nearlyFlatShorts
-        ? '兩位加密大佬均大幅回補BTC空單，剩餘均不到前期1%；尚未翻多，也不代表維持原有看空強度。'
-        : pair.every(item => item.direction === 'short')
-        ? '兩位加密大佬都往回補BTC空單方向移動，仍為空頭。'
-        : '兩位加密大佬的BTC數量都向多方移動，現有方向另看個別部位。';
-    } else if (pair.every(item => item.delta < 0)) {
-      btcAlignment = pair.every(item => item.direction === 'short')
-        ? '兩位加密大佬都擴大BTC空頭方向。' : '兩位加密大佬的BTC數量都向空方移動。';
-    } else if (pair.every(item => item.delta === 0)) btcAlignment = '兩位加密大佬的BTC數量均持平。';
-    else btcAlignment = '兩位加密大佬的BTC調倉節奏有差異。';
-  }
-  const goldPair = [rows[0].markets.GOLD, rows[2].markets.GOLD];
-  const goldDirectionSplit = goldPair.every(item => item.direction !== 'unknown')
-    ? goldPair[0].direction !== goldPair[1].direction : null;
-  const goldAdjustmentSplit = goldPair.every(item => finite(item.delta))
-    ? goldPair[0].delta * goldPair[1].delta < 0 : null;
-  return { rows, btcAlignment, nearlyFlatShorts, goldDirectionSplit, goldAdjustmentSplit,
-    scope: '僅三個可見地址及本期數量比較，不代表全市場或完整資產組合。' };
+  const markets = Object.fromEntries(MARKETS.map(market => [market, marketAlignment(rows, market)]));
+  return { rows, markets, btcAlignment: markets.BTC.text, nearlyFlatShorts: markets.BTC.nearlyFlatShorts,
+    goldDirectionSplit: markets['xyz:GOLD'].directionSplit,
+    goldAdjustmentSplit: markets['xyz:GOLD'].adjustmentSplit,
+    scope: '僅' + rows.length + '個可見地址及本期數量比較，不代表全市場或完整資產組合。' };
 }
 
 function etfText(label, etf, source) {
@@ -217,28 +234,38 @@ function fundText(label, etf) {
 
 function crossRead(context, alignment, confirmation, now) {
   const etf = context?.etf?.BTC;
-  const pair = alignment.rows.slice(0, 2).map(row => row.markets.BTC);
+  const items = alignment.rows.map(row => row.markets.BTC);
+  const btc = alignment.markets.BTC;
+  const count = alignment.rows.length;
   if (!finite(etf?.fiveSessionNetUsd) || !finite(etf?.twentySessionNetUsd)
-    || pair.some(item => !finite(item.delta))) return '交叉判讀：資金窗口或地址比較未齊，暫不判斷是否共同轉向。';
+    || btc.comparedCount < count) return '交叉判讀：資金窗口或地址比較未齊（BTC可比較'
+      + btc.comparedCount + '／' + count + '，新增基準' + btc.baselineCount + '），暫不判斷共同轉向。';
   const incoming = etf.fiveSessionNetUsd > 0 && etf.twentySessionNetUsd > 0;
   const outgoing = etf.fiveSessionNetUsd < 0 && etf.twentySessionNetUsd < 0;
-  const towardLong = pair.every(item => item.delta > 0);
-  const towardShort = pair.every(item => item.delta < 0);
-  const shortCovering = towardLong && pair.every(item => item.direction === 'short');
+  const shortCovering = items.every(item => item.action === 'cover_short');
+  const addingLongs = items.every(item => ['add_long', 'open_long', 'reverse_long'].includes(item.action));
+  const addingShorts = items.every(item => ['add_short', 'open_short', 'reverse_short'].includes(item.action));
+  const unchanged = items.every(item => item.delta === 0);
   const maRules = confirmation.rules.filter(item => item.id === 'ma200' || item.id === 'ma50');
   const priceConfirmed = maRules.every(item => item.status === 'passed');
   const priceUnknown = maRules.some(item => item.status === 'insufficient');
   const priceText = priceConfirmed ? '長週線修復條件已過' : priceUnknown ? '長週線確認資料未齊' : '長週線修復條件未過';
-  const observation = outgoing && alignment.nearlyFlatShorts
-    ? '兩位已大幅退出BTC空頭，殘餘均不到前期1%；尚未翻多，也不代表維持原有看空強度。已報ETF5／20日流出，'
-      + priceText + '。若後續維持小倉或無倉，較符合降風險或觀望的候選情境，仍缺資金與趨勢支持翻多。'
+  const flows = outgoing ? '已報ETF5／20日流出' : incoming ? '已報ETF5／20日流入' : 'ETF5／20日方向未一致';
+  const observation = btc.directionSplit || btc.adjustmentSplit
+    ? count + '地址BTC' + (btc.directionSplit ? '持倉多空並存' : '')
+      + (btc.directionSplit && btc.adjustmentSplit ? '且' : '') + (btc.adjustmentSplit ? '調倉有增有減' : '')
+      + '，沒有一致方向；' + flows + '，' + priceText + '。多單加倉與空單回補需分開解讀。'
+    : outgoing && alignment.nearlyFlatShorts
+    ? btc.priorShortCount + '個原BTC空頭大幅回補，殘餘均不到前期1%，尚未翻多；' + flows + '，'
+      + priceText + '。若後續維持小倉或空倉，可能偏向降風險或觀望，仍待驗證。'
     : outgoing && shortCovering
-    ? '兩位回補BTC但仍空，已報ETF5／20日流出，' + priceText + '，訊號分歧。若後續仍只回補而未開多，可能偏向獲利了結或降風險，動機仍待核對；資金與趨勢尚不足支持翻多。'
-    : outgoing && towardLong ? '地址向多方調整與ETF流出並存，' + priceText + '，承接仍待確認。'
-    : outgoing && towardShort ? '地址向空方調整與ETF流出同向，' + priceText + '，修復仍受壓。'
-    : incoming && towardLong ? '地址調整與ETF流入出現修復線索，' + priceText + '；即使同向，也只支持風險修復，不證明底部完成。'
-    : incoming && towardShort ? 'ETF流入與地址向空方調整分歧，需看買盤能否承接賣壓。'
-    : '地址與ETF窗口尚未呈現一致轉向。';
+    ? count + '地址回補BTC但仍空，' + flows + '，' + priceText + '，訊號分歧。若後續只回補未開多，可能偏向獲利了結或降風險；仍不足支持翻多。'
+    : outgoing && addingShorts ? count + '地址擴大BTC空頭與ETF流出同向，' + priceText + '，修復仍受壓。'
+    : incoming && addingLongs ? count + '地址增加BTC多頭與ETF流入出現修復線索，' + priceText + '；即使同向，也只支持風險修復，不證明底部完成。'
+    : incoming && shortCovering ? count + '地址同步回補BTC空單與ETF流入提供修復線索，' + priceText + '；回補仍是降低空頭曝險，不代表新多頭或底部完成。'
+    : incoming && addingShorts ? 'ETF流入與' + count + '地址增加BTC空頭分歧，需看買盤能否承接賣壓。'
+    : unchanged ? count + '地址BTC數量均持平；' + flows + '，' + priceText + '，尚無共同調倉訊號。'
+    : '地址調倉類型尚未一致；' + flows + '，' + priceText + '，暫不推論共同轉向。';
   const source = sourceFor(context, 'btcEtf');
   const limited = !usableSource(source, now, etf.asOf) || pendingAfterLastComplete(etf, source).length
     || missingWindow(etf, source) || partialCoverage(etf, source);
@@ -253,7 +280,7 @@ export function describeMarketContext({ context = {}, feed = {}, now = Date.now(
   const time = Number.isFinite(Number(now)) ? Number(now) : Date.now();
   const btc = context?.btc;
   const bottomConfirmation = bottomRules(context, time);
-  const whaleAlignment = whales(feed);
+  const whaleAlignment = buildWhaleAlignment(feed);
   const lines = [];
   if (finite(btc?.priceUsd) && btc.priceUsd > 0) {
     lines.push('週期位階：BTC日收盤約' + price(btc.priceUsd) + '，今年' + percent(btc.yearReturnPct)
@@ -276,10 +303,11 @@ export function describeMarketContext({ context = {}, feed = {}, now = Date.now(
   const whaleDate = whaleDates.length ? new Date(Math.max(...whaleDates)).toLocaleString('zh-TW', {
     timeZone: 'Asia/Taipei', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false,
   }) + '台灣時間' : '時間待補';
-  lines.push('大戶本期方向（快照截至' + whaleDate + '）：\n' + whaleAlignment.rows.map(row => row.name + '：'
-    + MARKETS.map(market => market + row.markets[market].text).join('；') + '。').join('\n'));
-  lines.push(whaleAlignment.btcAlignment + (whaleAlignment.goldDirectionSplit === true ? 'BTC大佬與黃金大佬的黃金持倉方向分歧。'
-    : whaleAlignment.goldAdjustmentSplit === true ? 'BTC大佬與黃金大佬的黃金加減倉方向分歧。' : ''));
+  const whaleLine = '大戶本期方向（快照截至' + whaleDate + '）：\n' + whaleAlignment.rows.map(row => row.name + '：'
+    + MARKETS.map(market => marketLabel(market) + row.markets[market].text).join('；') + '。').join('\n');
+  lines.push(whaleLine);
+  lines.push('市場對照（' + whaleAlignment.rows.length + '地址）：\n'
+    + MARKETS.map(market => whaleAlignment.markets[market].text).join('\n'));
   lines.push(crossRead(context, whaleAlignment, bottomConfirmation, time));
   lines.push('下一期驗證：看週收盤能否站穩均線、ETF能否持續轉流入，並觀察大戶是否保留新方向。若日收盤跌破暫定低點'
     + (bottomConfirmation.invalidation.referenceLowUsd ? '（' + bottomConfirmation.invalidation.referenceLowDate + '，' + price(bottomConfirmation.invalidation.referenceLowUsd) + '）' : '（待補）')
@@ -288,7 +316,8 @@ export function describeMarketContext({ context = {}, feed = {}, now = Date.now(
     + sourceLine('BTC ETF', sourceFor(context, 'btcEtf'), context.etf?.BTC?.asOf, time) + '；'
     + sourceLine('ETH ETF', sourceFor(context, 'ethEtf'), context.etf?.ETH?.asOf, time) + '。'
     + (bottomConfirmation.weeklyAsOf ? '週線截至' + bottomConfirmation.weeklyAsOf + '。' : '完整週線待補。'));
-  lines.push('範圍：大戶只按數量變化判斷；回補不等於翻多，其他帳戶或現貨可能對沖。ETF淨申贖僅代表一項機構通道，含套利需求，亦未涵蓋企業、黃金基金等全部機構；三地址不代表全市場。');
+  lines.push('範圍：大戶只按帶正負號數量判斷；回補不等於翻多，其他帳戶或現貨可能對沖。ETF淨申贖僅代表一項機構通道，含套利需求，亦未涵蓋企業、黃金基金等全部機構；'
+    + whaleAlignment.rows.length + '地址不代表全市場。');
   let report = lines.join('\n\n');
   if (report.length > 1800 && optionalFundLine) report = lines.filter(line => line !== optionalFundLine).join('\n\n');
   // Each non-optional line has bounded labels, dates and finite formatted numbers. Keep a hard safety

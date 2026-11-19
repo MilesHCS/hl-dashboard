@@ -1,266 +1,289 @@
+import { TRADERS, MARKETS, LABELS } from './traders.mjs';
+
 const DAY = 86400000;
-const ADDRESSES = [
-  '0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36',
-  '0x5b5d51203a0f9079f8aeb098a6523a13f298c060',
-  '0x46921f6961bdb411b756c9712f6bdb58fbd9164f',
-];
-const LABELS = ['BTC', 'ETH', '黃金'];
-const MARKETS = ['BTC-PERP', 'ETH-PERP', 'xyz:GOLD-PERP'];
+const HOUR = 3600000;
+const CACHE_MARKETS = MARKETS.map(market => market + '-PERP');
 
 function timestamp(value) {
-  if (typeof value === 'number') return value;
-  if (!value) return NaN;
-  const text = String(value).replace(' ', 'T');
+  if (typeof value === 'number') return Number.isFinite(value) ? value : NaN;
+  if (typeof value !== 'string' || !value) return NaN;
+  const text = value.replace(' ', 'T');
   return Date.parse(/(?:Z|[+-]\d\d:\d\d)$/.test(text) ? text : text + 'Z');
 }
 
-function finite(value) {
-  return typeof value === 'number' && Number.isFinite(value);
-}
-
+const finite = value => typeof value === 'number' && Number.isFinite(value);
+const amount = value => finite(value) && value >= 0 ? value : 0;
+const positive = value => Number.isFinite(Number(value)) && Number(value) > 0;
+const addressOf = value => typeof value === 'string' ? value.toLowerCase() : '';
 function number(value, digits = 0) {
-  return value.toLocaleString('en-US', { maximumFractionDigits: digits });
+  if (!finite(value)) return '待補';
+  return Math.abs(value) >= 1e12 ? value.toExponential(2)
+    : value.toLocaleString('en-US', { maximumFractionDigits: digits });
 }
+const localTime = value => new Date(value).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', hour12: false });
 
-function localTime(value) {
-  return new Date(value).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', hour12: false });
-}
-
-function averages(candles, time) {
-  const closed = (candles ?? []).filter(candle => Number(candle.T) < time && Number(candle.c) > 0)
-    .toSorted((a, b) => Number(a.t) - Number(b.t));
-  if (closed.length < 60) return null;
-  const mean = count => closed.slice(-count).reduce((sum, candle) => sum + Number(candle.c), 0) / count;
-  return { fast: mean(20), slow: mean(60) };
-}
-
-function change(before, after) {
-  if (!finite(before) || !finite(after)) return '比較基準待補齊';
-  if (before === after) return after ? '持倉數量持平' : '維持無倉';
-  if (!after) return '已平掉原有部位';
-  if (!before) return '新建立' + (after > 0 ? '多單' : '空單');
-  if (before * after < 0) return after > 0 ? '從空單翻為多單' : '從多單翻為空單';
-  const ratio = Math.abs(after / before) - 1;
-  const magnitude = Math.abs(ratio) < 0.01 ? '，幅度不到 1%' : '約 ' + number(Math.abs(ratio) * 100, 1) + '%';
-  return (ratio > 0 ? '增加' : '減少') + (after > 0 ? '多單' : '空單') + magnitude;
-}
-
-function tradeStats(rows, fourHourCandles) {
-  let opens = 0;
-  let closes = 0;
-  let openHours = 0;
-  let closeHours = 0;
-  let mixedHours = 0;
-  let openDistance = 0;
-  let closeDistance = 0;
-  let openWeight = 0;
-  let closeWeight = 0;
-  for (const row of rows) {
-    const open = Number(row.open_short_usd) || 0;
-    const close = Number(row.close_short_usd) || 0;
-    opens += open;
-    closes += close;
-    if (open > 0) openHours++;
-    if (close > 0) closeHours++;
-    if (open > 0 && close > 0) mixedHours++;
-    const ma = averages(fourHourCandles, timestamp(row.hour));
-    if (!ma) continue;
-    if (open > 0 && Number(row.open_short_vwap) > 0) {
-      openDistance += open * (Number(row.open_short_vwap) / ma.fast - 1);
-      openWeight += open;
-    }
-    if (close > 0 && Number(row.close_short_vwap) > 0) {
-      closeDistance += close * (Number(row.close_short_vwap) / ma.fast - 1);
-      closeWeight += close;
-    }
+function averageLookup(candles) {
+  const unique = new Map();
+  for (const candle of Array.isArray(candles) ? candles : []) {
+    const start = Number(candle?.t), end = Number(candle?.T), close = Number(candle?.c);
+    if (!Number.isFinite(start) || !Number.isFinite(end) || end < start || !(close > 0) || !Number.isFinite(close)) continue;
+    unique.set(start, { start, end, close });
   }
-  return {
-    opens, closes, openHours, closeHours, mixedShare: rows.length ? mixedHours / rows.length : 0,
-    openGap: openWeight ? openDistance / openWeight : null,
-    closeGap: closeWeight ? closeDistance / closeWeight : null,
+  const ordered = [...unique.values()].sort((a, b) => a.end - b.end || a.start - b.start);
+  const prefix = [0];
+  for (const candle of ordered) prefix.push(prefix.at(-1) + candle.close);
+  return time => {
+    if (!Number.isFinite(time)) return null;
+    let low = 0, high = ordered.length;
+    while (low < high) { const mid = Math.floor((low + high) / 2); if (ordered[mid].end < time) low = mid + 1; else high = mid; }
+    if (low < 60) return null;
+    return { fast: (prefix[low] - prefix[low - 20]) / 20, slow: (prefix[low] - prefix[low - 60]) / 60 };
   };
 }
 
-function persistenceText(rows, fourHourCandles, from, until) {
-  const midpoint = from + (until - from) / 2;
-  const early = tradeStats(rows.filter(row => timestamp(row.hour) < midpoint), fourHourCandles);
-  const late = tradeStats(rows.filter(row => timestamp(row.hour) >= midpoint), fourHourCandles);
-  const enough = [early, late].every(part => part.openHours >= 3 && part.closeHours >= 3
-    && part.openGap !== null && part.closeGap !== null);
-  if (!enough) return '前後半段的加空與回補時段尚未都達到可比樣本，對持續進場規則的判斷仍需累積。';
-  const bothSeparate = [early, late].every(part => part.openGap - part.closeGap > 0.01);
-  if (bothSeparate) return '把可見窗口分成前後兩段後，兩段都出現加空靠近短均線、回補離均線更遠的差異。這讓候選習慣的依據比單次操作完整，但仍需上漲與盤整環境驗證。';
-  const bothSimilar = [early, late].every(part => Math.abs(part.openGap - part.closeGap) < 0.005);
-  if (bothSimilar) return '前後兩段中，加空與回補相對 MA20 的位置都接近，對固定均線門檻的支持持續較弱。持續的核心庫存增減，比單次觸及均線更能反映目前立場。';
-  return '前後半段的均線關係尚未呈現同樣差異，可能受到不同波動環境或部位管理階段影響。後續若持續重複相同做法，才會提高對固定操作習慣的把握。';
+function change(before, after, compact = false) {
+  if (!finite(after)) return compact ? '持倉待補' : '目前持倉資料待補，暫不判變化';
+  if (!finite(before)) return (after > 0 ? '目前多頭' : after < 0 ? '目前空頭' : '目前無倉')
+    + (compact ? '（基準待補）' : '；首期比較基準待建立，不計增減百分比');
+  if (before === after) return !after ? '維持無倉' : after > 0 ? '多單數量持平' : '空單數量持平';
+  if (after === 0) return (before > 0 ? '多單' : '空單') + '平倉' + (compact ? '' : '，目前無倉');
+  if (before === 0) return '由無倉新開' + (after > 0 ? '多單' : '空單');
+  if (before * after < 0) return after > 0 ? '空轉多' : '多轉空';
+  const ratio = Math.abs(after / before) - 1;
+  if (!finite(ratio)) return (after > 0 ? '多單' : '空單') + '變動幅度待核對';
+  const magnitude = Math.abs(ratio) < 0.01 ? '不到1%' : number(Math.abs(ratio) * 100, 1) + '%';
+  return (ratio > 0 ? '增加' : '減少') + (after > 0 ? '多單' : '空單') + magnitude;
 }
 
-function positionMeaning(before, after, focus) {
-  if (!finite(before) || !finite(after)) return '前後倉位基準待補齊，本期先依可核對的行情與歷史操作判讀。';
-  if (before < 0 && after < 0 && Math.abs(after) <= Math.abs(before) * 0.75) {
-    return '本期回補比例較大，這個地址願意承擔的空頭風險已明顯下降。若其他商品也同步縮減，會更支持整體降曝險；若資金轉到其他部位，則需要從配置調整理解這次退出。';
-  }
-  if (before * after < 0) {
-    return '部位已跨越零，後續應把新方向當成新的操作週期追蹤，並比較它占全帳戶的規模。小額新倉與大額核心倉，對整體立場的影響不同。';
-  }
-  if (after < 0 && Math.abs(after) > Math.abs(before) && before < 0) {
-    return '新增空單提高了這個商品的下跌曝險。接下來要看新增數量能否持續保留，以及反彈時是否再次增加，才更能區分核心配置擴大與短線庫存調整。';
-  }
-  if (focus === 2 && after < 0) {
-    return '黃金仍保留空頭核心。日內加減倉可能相互抵銷，連續幾期的核心數量與其他商品配置，更適合觀察它是否真正改變風險承擔。';
-  }
-  if (after < 0) return '目前仍保留空頭部位，價格弱勢與逐步回補可以同時發生。後續應觀察部位是否連續收縮，以及反彈時有沒有把已減掉的空單重新建立。';
-  if (after > 0) return '目前保留多頭曝險，後續看回落時是否持有、上漲後是否加碼，才能逐步判斷這是短線試單還是較持續的新方向。';
-  return '目前這項商品無倉，後續重新建立部位的方向與規模，會比空倉期間的單次行情更能說明下一輪策略。';
+function coverageFor(user, cache, time) {
+  const address = addressOf(user);
+  const map = cache?.coverageByAddress;
+  const source = map && typeof map === 'object'
+    ? Object.entries(map).find(([key]) => addressOf(key) === address)?.[1] : null;
+  const storedFrom = timestamp(source?.fromISO), storedTo = timestamp(source?.toISO);
+  const from = Math.max(storedFrom, time - 30 * DAY);
+  const until = Math.min(storedTo, time);
+  const valid = Number.isFinite(from) && Number.isFinite(until) && from < until
+    && ['bootstrapping', 'ready'].includes(source?.state);
+  // Free history starts at the first complete UTC day, so a ready interval can
+  // cover 29-30 days. Do not require a full rolling 30*24 hours when the query
+  // deliberately excludes that first partial UTC day. Earlier valid targets
+  // within the same free window also remain compatible with saved coverage.
+  const freeStart = time - 30 * DAY;
+  const firstCompleteUtcDay = Math.ceil(freeStart / DAY) * DAY;
+  const requestedFrom = source?.requestedFromISO == null
+    ? firstCompleteUtcDay : timestamp(source.requestedFromISO);
+  const reasonableTarget = Number.isFinite(requestedFrom)
+    && requestedFrom >= freeStart && requestedFrom <= firstCompleteUtcDay;
+  const full = valid && source.state === 'ready' && reasonableTarget
+    && from <= requestedFrom && until >= time - HOUR;
+  return { address, source, valid, full, from, until,
+    rows: valid ? (Array.isArray(cache?.trades) ? cache.trades : []).filter(row =>
+      addressOf(row.address) === address && timestamp(row.hour) >= from
+      && timestamp(row.hour) + HOUR <= until) : [] };
 }
 
-function priceContext(context, now) {
-  if (!(Number(context?.price) > 0)) return '本期市價資訊待更新。';
-  const price = Number(context.price);
-  const ma = averages(context.fourHourCandles, now);
-  let sentence = '合約中間價約 ' + number(price) + ' 美元。';
-  if (context.month) sentence += context.month;
-  if (!ma) return sentence + '4 小時均線暖機資料不足。';
-  if (price < Math.min(ma.fast, ma.slow)) sentence += '價格仍低於 4 小時 MA20、MA60。';
-  else if (price > Math.max(ma.fast, ma.slow)) sentence += '價格已高於 4 小時 MA20、MA60。';
-  else sentence += '價格位於 4 小時 MA20 與 MA60 之間。';
-  sentence += ma.fast < ma.slow ? 'MA20 仍低於 MA60。' : 'MA20 已高於或等於 MA60。';
-  return sentence;
-}
-
-function profileText(stats, focus) {
-  const lines = [];
-  if (focus === 2 && stats.mixedShare >= 0.6) {
-    lines.push('近月多數活躍小時同時有加空與回補，較符合保留核心部位後頻繁調整庫存的候選習慣。後續應優先看淨持倉是否連續改變。');
-  } else if (stats.closes > stats.opens * 2 && stats.closes > 0) {
-    lines.push('近月回補空單的成交明顯多於新增空單，這段操作主軸偏向退出既有空倉。價格趨勢與交易者願意留下的風險，可能以不同速度改變。');
-  } else if (stats.opens > stats.closes * 1.2 && stats.opens > 0) {
-    lines.push('近月加空成交多於回補，後續要看新增空頭是否保留到下一次快照，或只是短線來回調整。');
-  } else if (stats.opens + stats.closes > 0) {
-    lines.push('近月同時有加空與回補，應以連續幾期的核心部位變化判斷立場。');
-  } else {
-    lines.push('近月尚無足夠的加空、回補紀錄可辨識操作習慣。');
-  }
-  if (stats.openGap !== null && stats.closeGap !== null) {
-    if (stats.openGap - stats.closeGap > 0.01) {
-      lines.push('加空成交相對較靠近 MA20，回補則出現在更低的位置。這支持反彈增加空頭、跌離短均線後收縮部位的候選做法，實際觸發條件仍待更多行情驗證。');
-    } else if (Math.abs(stats.openGap - stats.closeGap) < 0.005) {
-      lines.push('加空與回補相對 MA20 的位置接近，這段紀錄對固定均線門檻的支持較弱。');
-    } else {
-      lines.push('加空與回補的均線位置呈現差異，仍需分開看反彈、下跌和部位重置，才能判斷是否為持續規則。');
+function statsFor(rows, averageAt, side) {
+  let opens = 0, closes = 0, openHours = 0, closeHours = 0, mixedHours = 0, activeHours = 0;
+  let openDistance = 0, closeDistance = 0, openWeight = 0, closeWeight = 0;
+  for (const row of rows) {
+    const open = amount(row['open_' + side + '_usd']);
+    const close = amount(row['close_' + side + '_usd']);
+    opens += open; closes += close;
+    if (open > 0) openHours++;
+    if (close > 0) closeHours++;
+    if (open > 0 || close > 0) activeHours++;
+    if (open > 0 && close > 0) mixedHours++;
+    const ma = averageAt(timestamp(row.hour));
+    if (!ma) continue;
+    const openVwap = row['open_' + side + '_vwap'];
+    const closeVwap = row['close_' + side + '_vwap'];
+    if (open > 0 && positive(openVwap)) {
+      openDistance += open * (Number(openVwap) / ma.fast - 1); openWeight += open;
+    }
+    if (close > 0 && positive(closeVwap)) {
+      closeDistance += close * (Number(closeVwap) / ma.fast - 1); closeWeight += close;
     }
   }
-  return lines.join('');
+  return { opens, closes, openHours, closeHours, activeHours,
+    mixedShare: activeHours ? mixedHours / activeHours : 0,
+    openGap: openWeight ? openDistance / openWeight : null,
+    closeGap: closeWeight ? closeDistance / closeWeight : null };
+}
+
+function gapPattern(stats, side) {
+  if (stats.openGap === null || stats.closeGap === null) return 'insufficient';
+  if (Math.abs(stats.openGap - stats.closeGap) < 0.005) return 'similar';
+  const nearer = Math.abs(stats.openGap) + 0.01 < Math.abs(stats.closeGap);
+  if (nearer && (side === 'short' ? stats.closeGap < stats.openGap : stats.closeGap > stats.openGap)) return 'separated';
+  return 'other';
+}
+
+function sideProfile(stats, side) {
+  const open = side === 'long' ? '加多' : '加空';
+  const close = side === 'long' ? '減多／平多' : '回補';
+  const label = side === 'long' ? '多頭' : '空頭';
+  if (!stats.activeHours) return '';
+  let text = stats.mixedShare >= 0.6 ? label + '多個活躍小時同時有進出，較像庫存調整候選。'
+    : stats.closes > stats.opens * 2 && stats.closes > 0 ? close + '成交較多。'
+      : stats.opens > stats.closes * 1.2 && stats.opens > 0 ? open + '成交較多。'
+        : open + '與' + close + '並存，須看連續淨持倉。';
+  const pattern = gapPattern(stats, side);
+  if (pattern === 'separated') text += open + '較靠近MA20，' + close
+    + (side === 'long' ? '位置較高；僅為候選習慣。' : '位置較低；僅為候選習慣。');
+  else if (pattern === 'similar') text += label + '進出位置相近，固定MA門檻支持弱。';
+  else if (pattern === 'insufficient') text += label + 'VWAP或均線對照不足，不判固定均線規則。';
+  else text += label + '均線位置有差異，尚未辨識固定門檻。';
+  return text;
+}
+
+function persistenceText(rows, averageAt, research, activeSides) {
+  if (!research.full) return '前後段：近30天覆蓋待補，暫不判固定習慣。';
+  const midpoint = research.from + (research.until - research.from) / 2;
+  const parts = [];
+  for (const side of activeSides) {
+    const early = statsFor(rows.filter(row => timestamp(row.hour) < midpoint), averageAt, side);
+    const late = statsFor(rows.filter(row => timestamp(row.hour) >= midpoint), averageAt, side);
+    const label = side === 'long' ? '多頭' : '空頭';
+    const enough = [early, late].every(s => s.openHours >= 3 && s.closeHours >= 3
+      && s.openGap !== null && s.closeGap !== null);
+    if (!enough) { parts.push(label + '前後段進出／VWAP樣本不足'); continue; }
+    const patterns = [gapPattern(early, side), gapPattern(late, side)];
+    if (patterns.every(p => p === 'separated')) parts.push(label + '前後段均見近MA20加倉、較遠處退出的差異，仍待其他行情驗證');
+    else if (patterns.every(p => p === 'similar')) parts.push(label + '前後段進出位置均接近，固定門檻支持弱');
+    else parts.push(label + '前後半段差異未一致');
+  }
+  return '前後段：' + (parts.length ? parts.join('；') : '可比進出樣本不足') + '。';
+}
+
+function priceContext(context, now, averageAt) {
+  if (!positive(context?.price)) return '本期市價待補，暫不比較價格與4h均線。';
+  const price = Number(context.price), ma = averageAt(now);
+  let text = '參考價約' + number(price) + '美元。';
+  if (typeof context.month === 'string' && context.month.length <= 120) text += context.month;
+  if (!ma) return text + '4h MA20／MA60暖機資料不足。';
+  if (price < Math.min(ma.fast, ma.slow)) text += '價格低於4h MA20、MA60；';
+  else if (price > Math.max(ma.fast, ma.slow)) text += '價格高於4h MA20、MA60；';
+  else text += '價格在4h MA20與MA60之間；';
+  return text + (ma.fast < ma.slow ? 'MA20低於MA60。' : 'MA20高於或等於MA60。');
+}
+
+function marketDescription(index, quantities, previous, context, research, now) {
+  const current = quantities?.[index], before = previous?.quantities?.[index];
+  const rows = research.rows.filter(row => row.market === CACHE_MARKETS[index]);
+  const averageAt = averageLookup(context?.fourHourCandles);
+  const short = statsFor(rows, averageAt, 'short');
+  const long = statsFor(rows, averageAt, 'long');
+  const sides = [];
+  if (short.activeHours) sides.push('short');
+  if (long.activeHours) sides.push('long');
+  let profile = !research.valid ? '此地址成交覆蓋待補；無紀錄不等於無交易。'
+    : !sides.length ? '可見區間未收錄足夠可分類成交；無紀錄不等於無交易。'
+      : (research.full ? '近30天：' : '可見區間：') + sideProfile(short, 'short') + sideProfile(long, 'long');
+  if (research.valid && current > 0 && !long.activeHours && short.activeHours) {
+    profile += '目前多單缺進出樣本，不把空頭規則套用多單。';
+  }
+  return LABELS[index] + '｜' + priceContext(context, now, averageAt) + '\n本期：' + change(before, current) + '。'
+    + profile + persistenceText(rows, averageAt, research, sides);
 }
 
 function hedgeText(user, cache, hedge, now) {
-  if (user === ADDRESSES[2]) return '對沖觀察：黃金以外的股票、指數和商品部位也會影響整體風險。跨資產多空部位需要另驗證風險敏感度與聯動，才足以判定具體避險配對。';
-  const spot = hedge?.spotHype;
-  const perp = hedge?.perpHype;
-  let text = '對沖觀察：';
-  if (finite(spot) && finite(perp) && spot > 0 && perp < 0) {
-    const cover = spot / Math.abs(perp);
-    text += '目前可見 HYPE 現貨多頭與永續空頭，現貨數量約為空單的 ' + number(cover * 100) + '%。';
-    text += cover < 0.99 ? 'HYPE 仍有剩餘淨空頭。' : cover > 1.01 ? 'HYPE 仍有剩餘淨多頭。' : '兩腿數量接近配平。';
-  } else if (finite(spot) && finite(perp)) {
-    text += '本期未見同時成立的 HYPE 現貨多頭與永續空頭配對。';
-  } else {
-    text += '本期 HYPE 現貨或永續資料待補齊。';
-  }
-  const funding = (cache?.fundingDays ?? []).filter(row => row.address === user && row.market === 'HYPE-PERP'
-    && timestamp(row.day) >= now - 30 * DAY && timestamp(row.day) <= now);
+  const spot = hedge?.spotHype, perp = hedge?.perpHype;
+  let text = 'HYPE對沖：';
+  if (finite(spot) && spot >= 0 && finite(perp)) {
+    if (spot > 0 && perp < 0) {
+      const cover = spot / Math.abs(perp);
+      text += cover < 0.01 ? '現貨僅覆蓋永續空單不到1%，主要仍偏淨空；少量現貨不證明刻意配對。'
+        : '可見現貨多／永續空，現貨數量約覆蓋空單' + number(cover * 100) + '%；'
+          + (cover < 0.99 ? '仍偏淨空。' : cover > 1.01 ? '仍偏淨多。' : '兩腿數量接近。');
+    } else text += '可見數量未形成現貨多／永續空配對。';
+  } else text += '現貨或永續快照待補，不能當作沒有避險。';
+  const hedgeTime = timestamp(hedge?.at);
+  if (Number.isFinite(hedgeTime)) text += '快照' + localTime(hedgeTime) + '。';
+  const funding = (Array.isArray(cache?.fundingDays) ? cache.fundingDays : []).filter(row =>
+    addressOf(row.address) === addressOf(user) && row.market === 'HYPE-PERP'
+    && timestamp(row.day) >= now - 30 * DAY && timestamp(row.day) <= now && finite(row.funding_usdc));
   if (funding.length) {
-    const net = funding.reduce((sum, row) => sum + Number(row.funding_usdc || 0), 0);
-    const dates = funding.map(row => String(row.day).slice(0, 10)).toSorted();
-    text += '已保存區間（UTC ' + dates[0] + ' 至 ' + dates.at(-1) + '）的 HYPE 資金費合計為淨'
-      + (net >= 0 ? '收入' : '支出') + '。';
+    const net = funding.reduce((sum, row) => sum + row.funding_usdc, 0);
+    const dates = funding.map(row => String(row.day).slice(0, 10)).sort();
+    text += '已保存資金費（UTC ' + dates[0] + '至' + dates.at(-1) + '）'
+      + (net === 0 ? '淨額為零。' : net > 0 ? '為淨收入。' : '為淨支出。');
   }
-  return text + '這項配對主要影響 HYPE，其他商品的方向曝險與組合費用仍需另看。如果現貨先退出、空單沒有同步回補，剩餘淨空頭就會擴大；兩腿同時縮減則較符合退出配對部位。';
+  return text + '這只涉及HYPE；歷史資金費或跨資產多空，不足證明目前完整避險或獲利。';
 }
 
-export function describeStrategy({ user, focus, quantities, previous, context, cache, hedge, now = Date.now() }) {
-  const time = timestamp(now);
-  const address = user.toLowerCase();
-  const before = previous?.quantities?.[focus];
-  const current = quantities?.[focus];
-  const from = Math.max(timestamp(cache?.fromISO) || 0, time - 30 * DAY);
-  const until = Math.min(timestamp(cache?.toISO) || time, time);
-  const rows = (cache?.trades ?? []).filter(row => row.address === address && row.market === MARKETS[focus]
-    && timestamp(row.hour) >= from && timestamp(row.hour) < until);
-  const stats = tradeStats(rows, context?.fourHourCandles);
-  const paragraphs = [
-    priceContext(context, time),
-    '本期' + LABELS[focus] + ' ' + change(before, current) + '。' + profileText(stats, focus),
-    positionMeaning(before, current, focus),
-    persistenceText(rows, context?.fourHourCandles, from, until),
-    hedgeText(address, cache, hedge, time),
-  ];
-  if (current < 0) {
-    paragraphs.push('接下來觀察：如果反彈接近短均線時重新加空，會支持空頭操作延續；若反彈期間仍持續回補，則代表它繼續收縮空頭風險。鎖定收益、資金調度與降低槓桿等動機，需要資金流與其他部位再核對。');
-  } else if (current > 0) {
-    paragraphs.push('接下來觀察：看價格回落時是否保留多單，以及重新站穩均線後是否增加核心部位。持續減倉則顯示它在收縮這個方向的風險。');
-  } else {
-    paragraphs.push('接下來觀察：重新開倉的方向、成交位置與後續能否保留，比空倉期間的單次價格變動更能呈現下一輪策略。');
-  }
-  const dataTime = Number.isFinite(timestamp(cache?.toISO)) ? localTime(timestamp(cache.toISO)) : '尚無';
-  const coverage = rows.length ? '歷史計算截至 ' + dataTime + '（台灣時間）。' : '本期缺少可用的近月成交資料，策略段僅供累積觀察。';
-  paragraphs.push('資料充分性：' + coverage + '均線比較只使用當時已收盤的 K 線。先前研究窗口起點已有核心空單，原始建倉理由仍需更早資料。');
-  return paragraphs.join('\n\n').slice(0, 3000);
+function researchText(research) {
+  let text = '資料充分性：';
+  if (!research.valid) text += '此地址近30天成交覆蓋待補，沒有借用其他地址或全域研究時間。';
+  else text += '此地址可見窗口為' + localTime(research.from) + '至' + localTime(research.until)
+    + '（台灣時間）；' + (research.full ? '近30天覆蓋已齊。' : '近30天尚未補齊。');
+  return text + '均線只用當時已收盤4h K線；可見紀錄不能直接證明原始建倉動機。';
+}
+
+function nextText(quantities, indices = MARKETS.map((_, i) => i)) {
+  const parts = indices.map(index => LABELS[index] + '：' + (!finite(quantities?.[index]) ? '先補持倉快照'
+    : quantities[index] > 0 ? '看回落是否留多、轉強後是否加多'
+      : quantities[index] < 0 ? '看反彈是否加空或持續回補'
+        : '看重開方向及能否留倉'));
+  return '下一期驗證：' + parts.join('；') + '。單次成交不等於持續規則，回補空單也不等於翻多。';
+}
+
+export function describeTrader({ user, quantities, previous, contexts, cache, hedge, now = Date.now() } = {}) {
+  const time = Number.isFinite(timestamp(now)) ? timestamp(now) : Date.now();
+  const research = coverageFor(user, cache, time);
+  return [
+    ...MARKETS.map((_, index) => marketDescription(index, quantities, previous, contexts?.[index], research, time)),
+    hedgeText(user, cache, hedge, time),
+    researchText(research),
+    nextText(quantities),
+  ].join('\n\n');
+}
+
+// Compatibility for callers that still request one market. It uses the same side-aware and
+// per-address coverage rules, never the old address/focus identity assumptions.
+export function describeStrategy({ user, focus, quantities, previous, context, cache, hedge, now = Date.now() } = {}) {
+  if (!Number.isInteger(focus) || focus < 0 || focus >= MARKETS.length) return '商品選擇無效，未作單一市場策略判讀。';
+  const time = Number.isFinite(timestamp(now)) ? timestamp(now) : Date.now();
+  const research = coverageFor(user, cache, time);
+  return [
+    marketDescription(focus, quantities, previous, context, research, time),
+    hedgeText(user, cache, hedge, time),
+    researchText(research),
+    nextText(quantities, [focus]),
+  ].join('\n\n');
 }
 
 function getEntry(feed, address) {
-  return feed?.[address] ?? null;
+  return feed?.[address] ?? Object.entries(feed ?? {}).find(([key]) => addressOf(key) === address)?.[1] ?? null;
+}
+function quantityOf(entry, index) {
+  const value = entry?.quantities?.[index];
+  if (Array.isArray(entry?.quantities) && index in entry.quantities) return finite(value) ? value : null;
+  return finite(value) ? value : finite(entry?.levels?.[MARKETS[index]]?.quantity) ? entry.levels[MARKETS[index]].quantity : null;
 }
 
-function comparable(entry, focus) {
-  return finite(entry?.quantities?.[focus]) && finite(entry?.previousQuantities?.[focus]);
-}
-
-function reduction(entry, focus) {
-  if (!comparable(entry, focus)) return null;
-  const before = entry.previousQuantities[focus];
-  const after = entry.quantities[focus];
-  if (before >= 0 || after >= 0) return null;
-  return 1 - Math.abs(after / before);
-}
-
-export function summarizeTraders(feed, now = Date.now()) {
-  const entries = ADDRESSES.map(address => getEntry(feed, address));
-  const time = timestamp(now);
-  const updated = entries.map(entry => timestamp(entry?.updatedAt)).filter(Number.isFinite);
-  const starts = entries.map(entry => timestamp(entry?.from)).filter(Number.isFinite);
-  const btcReductions = [reduction(entries[0], 0), reduction(entries[1], 0)];
-  const paragraphs = [];
-  if (btcReductions.every(value => value !== null && value > 0)) {
-    paragraphs.push('BTC大佬和 ETH大佬都減少 BTC 空單，加密空頭曝險正在收縮。' +
-      (btcReductions[1] > btcReductions[0] ? 'ETH大佬的 BTC 回補比例較大。' : 'BTC大佬的 BTC 回補比例較大或相近。'));
-  } else if (btcReductions.every(value => value !== null && value < 0)) {
-    paragraphs.push('兩位加密交易者都增加 BTC 空單，這一期新增的空頭曝險方向一致。');
-  } else if (btcReductions.every(value => value !== null)) {
-    paragraphs.push('兩位加密交易者對 BTC 的調倉節奏有差異，應分開觀察保留的核心部位與新增風險。');
-  } else {
-    paragraphs.push('BTC 比較基準或部位方向尚未一致，以下分別觀察可核對的變化。');
-  }
-  const changes = [];
-  for (let i = 0; i < entries.length; i++) {
-    const entry = entries[i];
-    if (entry && comparable(entry, i)) changes.push(entry.name + '的' + LABELS[i] + change(entry.previousQuantities[i], entry.quantities[i]));
-  }
-  if (changes.length) paragraphs.push('本期差異：' + changes.join('；') + '。');
-  const gold = entries.filter(entry => comparable(entry, 2));
-  if (gold.length === 3) {
-    const deltas = gold.map(entry => entry.quantities[2] - entry.previousQuantities[2]);
-    const allShort = gold.every(entry => entry.quantities[2] < 0);
-    const split = deltas.some(value => value > 0) && deltas.some(value => value < 0);
-    paragraphs.push('黃金比較：' + (allShort ? '三個地址均保留黃金空頭。' : '三個地址的黃金持倉方向存在差異。') +
-      (split ? '本期有人回補、有人加空，調倉方向出現分歧。' : deltas.every(value => value === 0) ? '本期黃金數量均持平。' : '各地址調倉幅度不同，持續幾期的核心數量更值得追蹤。'));
-  } else {
-    paragraphs.push('黃金比較：部分地址缺少有效前後快照，跨地址結論待資料補齊。');
-  }
-  paragraphs.push('下一期重點：觀察價格反彈接近 MA20 時，兩位加密交易者是否重新加空，或仍持續回補；再看黃金是否同步收縮。這能逐步區分階段性調整與更持續的方向改變。');
-  paragraphs.push('風險與資料：HYPE 現貨／永續配對主要抵銷該資產的部分曝險。跨地址同向操作與近月均線關聯，仍需更長行情和整體部位核對。各地址的實際比較時段見個別日報。');
+export function summarizeTraders(feed = {}, now = Date.now()) {
+  const time = Number.isFinite(timestamp(now)) ? timestamp(now) : Date.now();
+  const entries = TRADERS.map(trader => ({ ...trader, entry: getEntry(feed, trader.user) }));
+  const updated = entries.map(({ entry }) => timestamp(entry?.updatedAt)).filter(Number.isFinite);
+  const starts = entries.map(({ entry }) => timestamp(entry?.from)).filter(Number.isFinite);
+  const lines = entries.map(({ name, entry }) => name + '：' + (entry
+    ? MARKETS.map((_, index) => LABELS[index] + change(entry.previousQuantities?.[index], quantityOf(entry, index), true)).join('；')
+    : '三市場快照待補') + '。');
+  const directions = MARKETS.map((_, index) => {
+    const values = entries.map(({ entry }) => quantityOf(entry, index));
+    return LABELS[index] + '多' + values.filter(q => finite(q) && q > 0).length
+      + '／空' + values.filter(q => finite(q) && q < 0).length
+      + '／無倉' + values.filter(q => q === 0).length
+      + (values.some(q => !finite(q)) ? '／待補' + values.filter(q => !finite(q)).length : '');
+  }).join('；') + '。';
+  const intro = '本期' + TRADERS.length + '地址三市場比較；各址依自身有效基準，首期先建基準。';
+  const next = '下一期重點：多頭看回落留倉，空頭看反彈加空或連續回補；無倉看重開方向。新增數量能否保留，比單次成交更重要。';
+  const limits = '範圍：僅可見地址與市場；回補不等於翻多，缺資料不當零變化，HYPE配對不代表整體避險。比較時段見個別日報。';
+  let paragraphs = [intro, ...lines, '目前方向分布：' + directions, next, limits];
+  if (paragraphs.join('\n\n').length > 1100) paragraphs = [intro, ...lines, next, '回補不等於翻多；缺基準不計增減百分比。'];
   return {
-    name: '三個地址綜合結論',
+    name: TRADERS.length + '個地址綜合結論',
     updatedAt: new Date(updated.length ? Math.min(...updated) : time).toISOString(),
     from: new Date(starts.length ? Math.min(...starts) : time).toISOString(),
     report: paragraphs.join('\n\n'),

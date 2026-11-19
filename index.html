@@ -174,6 +174,16 @@
   .err .btn { display: inline-block; margin-top: 8px; padding: 6px 12px; border-radius: 8px; background: var(--accent); color: #fff; font-weight: 600; }
   footer { text-align: center; font-size: 12px; color: var(--muted); margin-top: 18px; }
   .skeleton { color: var(--muted); text-align: center; padding: 60px 0; }
+  /* Shared video forecast reference at the end of the analysis tab. */
+  .forecast-timeline { border-top: 1px solid var(--line); margin-top: 24px; padding-top: 20px; }
+  .forecast-timeline h3 { margin: 0 0 8px; font-size: 16px; }
+  .forecast-timeline p { margin: 0 0 12px; }
+  .forecast-timeline figure { margin: 0; }
+  .forecast-timeline .timeline-preview { display: block; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .forecast-timeline img { display: block; width: 100%; height: auto; background: #fbfcf8; }
+  .forecast-timeline figcaption { margin-top: 8px; font-size: 12px; color: var(--muted); }
+  .forecast-timeline .timeline-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .forecast-timeline .timeline-links a { display: inline-flex; align-items: center; min-height: 44px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--card-2); font-size: 13px; }
 </style>
 </head>
 <body>
@@ -205,8 +215,6 @@
 const CONFIG = {
   // 直連模式要顯示的錢包（從電腦打開時，會自動改用 hl_monitor.py 裡的名單）
   traders: [
-    { user: "0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36", name: "BTC大佬" },
-    { user: "0x5b5d51203a0f9079f8aeb098a6523a13f298c060", name: "ETH大佬" },
     { user: "0x46921f6961bdb411b756c9712f6bdb58fbd9164f", name: "黃金大佬" },
     { user: "0x45d26f28196d226497130c4bac709d808fed4029", name: "大佬1" },
     { user: "0xdf954bbe619273a56e0cfa90dad8382195dc7d72", name: "大佬2" },
@@ -214,6 +222,7 @@ const CONFIG = {
     { user: "0x7fdafde5cfb5465924316eced2d3715494c517d1", name: "大佬4" },
     { user: "0xecb63caa47c7c4e77f60f1ce858cf28dc2b82b00", name: "大佬5" },
   ],
+  retiredAddresses: ["0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36", "0x5b5d51203a0f9079f8aeb098a6523a13f298c060"],
   // 備用：電腦儀表板的網址。填 https 的 Tailscale 網址（https://電腦名稱.tailnet.ts.net）
   // 直連失敗時會自動改用電腦；填 http 網址的話，只會顯示「打開電腦版」按鈕
   computerUrl: "",
@@ -239,9 +248,50 @@ const CONFIG = {
   let traders = [];
   let recentByCoin = new Map();
   let current = (new URLSearchParams(location.search).get("user") || "").toLowerCase();
+  if (CONFIG.retiredAddresses.includes(current)) current = "";
   let data = null, lastOk = 0, lastErr = "", timer = null, loading = false;
   let period = store.get("hl.period", "day");
   let metric = store.get("hl.metric", "accountValueHistory");
+  let reports = null, reportError = false, combinedReport = null;
+  async function loadReports() {
+    try {
+      const response = await fetch("./analysis/latest.json", {cache:"no-store"});
+      if (!response.ok) throw Error(response.status);
+      reports = await response.json();
+      try {
+        const summaryResponse = await fetch("./analysis/summary.json", {cache:"no-store"});
+        combinedReport = summaryResponse.ok ? await summaryResponse.json() : null;
+      } catch { combinedReport = null; }
+      reportError = false;
+    } catch { reportError = true; }
+    if (data && sortKey === "analysis") render();
+  }
+  function forecastTimelinePanel() {
+    const assets = "./analysis/assets/forecast-timeline-2026-11-18";
+    return `<section class="forecast-timeline" aria-label="影片預測總時間軸">
+      <h3>影片預測總時間軸</h3>
+      <p class="small sec">四支影片對美股、科技股、BTC、黃金、原油與美債的預測，依時間並列，保留目標價、條件與修改版本。</p>
+      <figure>
+        <a class="timeline-preview" href="${assets}.png" target="_blank" rel="noopener noreferrer" aria-label="開啟完整預測時間軸，可放大閱讀">
+          <img src="${assets}-preview.webp" width="1600" height="1440" loading="lazy" decoding="async" alt="四支影片預測總時間軸，按六類資產分列，呈現2026年9月至2030年底的預測節點與版本修正。">
+        </a>
+        <figcaption>點圖開啟原尺寸，可用雙指放大。綠色為看漲、紅色為看跌、菱形為候選轉折；虛線代表條件、低信心或已標日期的舊版路徑。</figcaption>
+      </figure>
+      <div class="timeline-links">
+        <a href="${assets}.png" target="_blank" rel="noopener noreferrer">放大圖片 ↗</a>
+        <a href="${assets}.pdf" target="_blank" rel="noopener noreferrer">開啟／下載 PDF ↗</a>
+      </div>
+      <p class="small muted" style="margin:12px 0 0">製圖：2026/11/18；實際行情核對截至 2026/11/16。這是固定版本的預測參考圖，箭頭不代表實際走勢；時間區段非等比例。</p>
+    </section>`;
+  }
+  function analysisPanel(user) {
+    const timeline = forecastTimelinePanel();
+    const entry = reports?.[user.toLowerCase()];
+    if (!entry) return '<div class="empty">'+(reportError?'分析載入失敗，請重新整理。':reports?'此地址尚無日報，新名單等待雲端分析完成。':'分析載入中…')+'</div>'+timeline;
+    const time = new Date(entry.updatedAt).toLocaleString("zh-TW",{timeZone:"Asia/Taipei",hour12:false});
+    const combined = combinedReport?.report && CONFIG.traders.every(trader => reports?.[trader.user]) ? '<hr style="border:0;border-top:1px solid var(--line);margin:20px 0"><strong>六個地址綜合結論</strong><div class="small muted">'+esc(new Date(combinedReport.updatedAt).toLocaleString("zh-TW",{timeZone:"Asia/Taipei",hour12:false}))+' 台灣時間</div><div style="white-space:pre-line;line-height:1.65;margin-top:8px">'+esc(combinedReport.report)+'</div>' : '';
+    return '<div class="small muted">'+esc(entry.name)+' · '+esc(time)+' 台灣時間'+(reportError?' · 顯示上次資料':'')+'</div><div style="white-space:pre-line;line-height:1.65;margin-top:8px">'+esc(entry.report)+'</div>'+combined+timeline;
+  }
   let sortKey = store.get("hl.sort", "value");
   if (sortKey === "recent") sortKey = "ops";
   const OPS_WINDOWS = [["recent", 0, `近${CONFIG.recentMinutes || 60}分`], ["10k", 0, "近1萬筆"]];
@@ -677,16 +727,16 @@ const CONFIG = {
       sortKey === "pnl" ? num(b.unrealizedPnl) - num(a.unrealizedPnl)
       : sortKey === "coin" ? String(a.coin).localeCompare(String(b.coin))
       : num(b.positionValue) - num(a.positionValue));
-    const tabs = [["value", "價值"], ["pnl", "損益"], ["coin", "幣種"], ["ops", "近期操作"]];
+    const tabs = [["value", "價值"], ["pnl", "損益"], ["coin", "幣種"], ["ops", "近期操作"], ["analysis", "分析"]];
     const winSeg = `<div class="seg wins" id="winSeg">${OPS_WINDOWS.map(([k, , l]) => `<button data-win="${k}" aria-pressed="${k === opsWin}">${l}</button>`).join("")}</div>`;
     const opsBody = !opsReady ? `<div class="empty">載入中…</div>`
       : ops.length ? coverage + ops.map(recentRow).join("")
       : `<div class="empty">${isRecentWin ? `最近 ${RECENT_MIN} 分鐘沒有操作` : "查不到成交紀錄"}</div>`;
-    const body = isOps
+    const body = sortKey === "analysis" ? analysisPanel(current) : isOps
       ? winSeg + opsBody
       : (sorted.length ? sorted.map(posRow).join("") : `<div class="empty">目前沒有持倉</div>`);
     html.push(`<section class="card">
-      <div class="card-head"><h2>${isOps ? `近期操作${opsReady ? `（${ops.length}）` : ""}` : `持倉（${positions.length}）`}</h2>
+      <div class="card-head"><h2>${sortKey === "analysis" ? "地址分析" : isOps ? `近期操作${opsReady ? `（${ops.length}）` : ""}` : `持倉（${positions.length}）`}</h2>
         <div class="seg" id="sortSeg">
           ${tabs.map(([k, l]) => `<button data-sort="${k}" aria-pressed="${k === sortKey}">${l}${k === "ops" && recent.length ? ` <span class="dotn">${recent.length}</span>` : ""}</button>`).join("")}
         </div>
@@ -870,6 +920,7 @@ const CONFIG = {
     if (b.dataset.period) { period = b.dataset.period; store.set("hl.period", period); return render(); }
     if (b.dataset.sort) {
       sortKey = b.dataset.sort; store.set("hl.sort", sortKey); render();
+      if (sortKey === "analysis") loadReports();
       if (sortKey === "ops" && data && data.opsWin !== opsWin) refresh();
       return;
     }
@@ -889,6 +940,7 @@ const CONFIG = {
 
   (async () => {
     await setupSources();
+    loadReports();
     if (!current) { lastErr = "沒有設定要監控的錢包"; renderStatus(); return; }
     await refresh();
     schedule();

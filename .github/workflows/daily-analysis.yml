@@ -30,7 +30,9 @@ jobs:
           node --check scripts/strategy-report.mjs
           node --check scripts/market-context-data.mjs
           node --check scripts/market-context-report.mjs
-          node --test scripts/test-market-context-data.mjs scripts/test-market-context-report.mjs
+          node --check scripts/traders.mjs
+          node --check scripts/position-snapshot.mjs
+          node --test scripts/test-*.mjs
       - name: Fetch positions and save reports
         env:
           IRONFLOW_API_KEY: ${{ secrets.IRONFLOW_API_KEY }}
@@ -47,6 +49,8 @@ jobs:
           cp index.html _site/
           cp analysis/latest.json analysis/summary.json _site/analysis/
           cp -r analysis/daily _site/analysis/
+          if [ -d analysis/assets ]; then cp -r analysis/assets _site/analysis/; fi
+          cp analysis/forecast-nodes.json _site/analysis/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site

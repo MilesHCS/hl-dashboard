@@ -1,10 +1,12 @@
 import fs from 'node:fs/promises';
 import { review } from './swing-context.mjs';
 import { refreshStrategyCache } from './strategy-data.mjs';
-import { describeStrategy, summarizeTraders } from './strategy-report.mjs';
+import { describeTrader, summarizeTraders } from './strategy-report.mjs';
 import { refreshMarketContext } from './market-context-data.mjs';
 import { describeMarketContext } from './market-context-report.mjs';
 import { describeForecastTracking } from './forecast-tracking.mjs';
+import { TRADERS } from './traders.mjs';
+import { fetchTrackedSnapshot } from './position-snapshot.mjs';
 
 const DAY = 86400000;
 const now = Date.now();
@@ -12,11 +14,7 @@ const today = Math.floor(now / DAY) * DAY;
 const taipeiDate = time => new Date(time + 8 * 3600000).toISOString().slice(0, 10);
 const reportDate = taipeiDate(now);
 const coins = ['BTC', 'ETH', 'xyz:GOLD'];
-const traders = [
-  ['0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36', 'BTC大佬', 0],
-  ['0x5b5d51203a0f9079f8aeb098a6523a13f298c060', 'ETH大佬', 1],
-  ['0x46921f6961bdb411b756c9712f6bdb58fbd9164f', '黃金大佬', 2],
-];
+const traders = TRADERS;
 const historyPath = 'analysis/observations.json';
 const cachePath = 'analysis/strategy-cache.json';
 const marketCachePath = 'analysis/market-context-cache.json';
@@ -36,9 +34,14 @@ try {
 }
 
 function baseline(user) {
-  if (previousArchive[user]) return previousArchive[user];
+  const archived = previousArchive[user];
+  const archivedTime = Date.parse(archived?.updatedAt);
+  if (Array.isArray(archived?.quantities) && archived.quantities.length === 3
+      && archived.quantities.every(Number.isFinite) && Number.isFinite(archivedTime)
+      && taipeiDate(archivedTime) < reportDate) return archived;
   const older = (history.snapshots[user] ?? [])
-    .filter(row => taipeiDate(row.t) < reportDate).sort((a, b) => b.t - a.t)[0];
+    .filter(row => Number.isFinite(row.t) && taipeiDate(row.t) < reportDate
+      && Array.isArray(row.q) && row.q.length === 3 && row.q.every(Number.isFinite)).sort((a, b) => b.t - a.t)[0];
   return older ? { updatedAt: new Date(older.t).toISOString(), quantities: older.q } : null;
 }
 
@@ -98,54 +101,28 @@ for (const [index, coin] of coins.entries()) {
 }
 
 const feed = {};
-for (const [user, name, focus] of traders) {
+for (const { user, name } of traders) {
   const previous = baseline(user);
-  const positions = [];
-  for (const dex of ['', 'xyz']) {
-    const state = await info({ type: 'clearinghouseState', user, dex });
-    if (!Array.isArray(state.assetPositions)) throw Error('Incomplete position snapshot');
-    positions.push(...state.assetPositions.map(row => row.position));
-  }
-  const quantities = coins.map(coin => Number(positions.find(p => p.coin === coin)?.szi ?? 0));
-  if (quantities.some(q => !Number.isFinite(q))) throw Error('Invalid quantity');
-  let hedge = null;
-  if (focus !== 2) {
-    try {
-      const spot = await info({ type: 'spotClearinghouseState', user });
-      if (!Array.isArray(spot.balances)) throw Error('Missing spot balances');
-      const spotHype = Number(spot.balances.find(balance => balance.coin === 'HYPE')?.total ?? 0);
-      const perpHype = Number(positions.find(p => p.coin === 'HYPE')?.szi ?? 0);
-      if (!Number.isFinite(spotHype) || !Number.isFinite(perpHype)) throw Error('Invalid hedge size');
-      hedge = { spotHype, perpHype, at: new Date().toISOString(), scope: 'Hyperliquid main and xyz perpetuals plus spot' };
-    } catch { console.warn('Spot hedge snapshot unavailable for', name); }
-  }
+  const snapshot = await fetchTrackedSnapshot({ info, user, contexts });
+  const { quantities, levels, hedge, marketStatus } = snapshot;
   const updatedAt = new Date().toISOString();
-  const levels = Object.fromEntries(coins.map((coin, index) => {
-    const position = positions.find(p => p.coin === coin);
-    return [coin, {
-      quantity: quantities[index], midUsd: contexts[index].price,
-      entryUsd: position ? Number(position.entryPx) : null,
-      notionalUsd: position ? Number(position.positionValue) : 0,
-      unrealizedPnlUsd: position ? Number(position.unrealizedPnl) : 0,
-    }];
-  }));
-  const report = describeStrategy({ user, focus, quantities, previous, context: contexts[focus], cache, hedge, now });
+  const report = describeTrader({ user, quantities, previous, contexts, cache, hedge, now });
   const events = (history.events[user] ?? []).filter(event => event.t >= today - 365 * DAY);
   const forwardStudy = events.length
-    ? '\n\n歷史事件追蹤：' + review(history.snapshots[user] ?? [], events, focus, contexts[focus].candles, now).split('\n').at(-1) : '';
+    ? '\n\n歷史事件追蹤：' + coins.map((coin, index) => coin + '：' + review(history.snapshots[user] ?? [], events, index, contexts[index].candles, now).split('\n').at(-1)).join('；') : '';
   const comparisonTime = previous
     ? '比較起點 ' + new Date(previous.updatedAt).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', hour12: false }) + '（台灣時間）。'
     : '本期建立持倉比較基準。';
   feed[user] = {
-    name, levels, hedge, quantities, previousQuantities: previous?.quantities ?? null,
+    name, levels, hedge, marketStatus, quantities, previousQuantities: previous?.quantities ?? null,
     baselineDate: previous ? taipeiDate(Date.parse(previous.updatedAt)) : null,
     from: previous?.updatedAt ?? updatedAt, updatedAt,
-    goldChange: previous?.quantities ? quantities[2] - previous.quantities[2] : null,
-    strategyAsOf: cache.toISO, strategyStatus: refreshed.status,
+    goldChange: Number.isFinite(quantities[2]) && Number.isFinite(previous?.quantities?.[2]) ? quantities[2] - previous.quantities[2] : null,
+    strategyAsOf: cache.coverageByAddress?.[user]?.toISO ?? null, strategyCoverage: cache.coverageByAddress?.[user] ?? null, strategyStatus: refreshed.status,
     report: comparisonTime + '\n\n' + report + '\n\n' + refreshed.status + forwardStudy,
   };
   const snapshots = history.snapshots[user] ?? [];
-  snapshots.push({ t: now, q: quantities });
+  if (snapshot.complete) snapshots.push({ t: now, q: quantities });
   history.snapshots[user] = snapshots.filter(snapshot => snapshot.t >= now - 366 * DAY);
   history.events[user] = events;
 }
@@ -195,4 +172,3 @@ for (const [path, content] of [
   catch (error) { if (error.code !== 'EEXIST') throw error; }
 }
 console.log('Published reports:', Object.keys(feed).length + 1);
-
