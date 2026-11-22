@@ -1,27 +1,18 @@
 {
   "name": "6個地址綜合結論",
-  "updatedAt": "2026-11-21T08:10:01.432Z",
-  "from": "2026-11-19T17:34:08.063Z",
-  "report": "本期6地址三市場比較；各址依自身有效基準，首期先建基準。\n\n黃金大佬：BTC維持無倉；ETH維持無倉；黃金減少空單不到1%。\n\n大佬1：BTC空單數量持平；ETH空單數量持平；黃金維持無倉。\n\n大佬2：BTC增加空單1.5%；ETH減少空單6.4%；黃金空單數量持平。\n\n大佬3：BTC維持無倉；ETH維持無倉；黃金維持無倉。\n\n大佬4：BTC減少空單8.3%；ETH空轉多；黃金減少空單8.9%。\n\n大佬5：BTC空轉多；ETH增加空單48%；黃金減少多單65.2%。\n\n目前方向分布：BTC多1／空3／無倉2；ETH多1／空3／無倉2；黃金多1／空3／無倉2。\n\n下一期重點：多頭看回落留倉，空頭看反彈加空或連續回補；無倉看重開方向。新增數量能否保留，比單次成交更重要。\n\n範圍：僅可見地址與市場；回補不等於翻多，缺資料不當零變化，HYPE配對不代表整體避險。比較時段見個別日報。\n\n週期位階：BTC日收盤約58,851美元，今年-32.8%；距本輪最高收盤-52.9%，目前最深回撤-53.1%。\n\n資料日距高點約410天，歷史三輪到低點約364–406天。時間相似不等於已見底；本輪低點仍暫定，最終跌幅未定。\n\n底部候選規則（50／200週線約74,980美元／67,967美元，隨週更新）：連續兩週站穩200週線【未通過】；連續兩週站穩50週線且均線不再下降【未通過】；BTC ETF近5與20個完整交易日均淨流入【資料不足】。確認資料未齊。規則未經完整回測或機率校準，全部通過也不保證見底。\n\nBTC ETF：近5／20完整交易日淨流出13.1億美元／淨流出38.1億美元。較新日期未報齊，未當成零流量。ETH ETF（The Block已涵蓋8檔，非全體）：近5／20完整交易日淨流出2億美元／淨流出12.9億美元。較新日期未報齊，未當成零流量。\n\nBTC近5完整交易日：主要淨申購MSBT、主要淨贖回IBIT。ETH近5完整交易日：主要淨申購FETH、主要淨贖回ETHA。\n\n大戶本期方向（快照截至11/21 16:10台灣時間）：\n黃金大佬：BTC空倉持平；ETH空倉持平；GOLD空單回補0.5%。\n大佬1：BTC空持平；ETH空持平；GOLD空倉持平。\n大佬2：BTC空單加倉1.5%；ETH空單回補6.4%；GOLD空持平。\n大佬3：BTC空倉持平；ETH空倉持平；GOLD空倉持平。\n大佬4：BTC空單回補8.3%；ETH空轉多；GOLD空單回補8.9%。\n大佬5：BTC空轉多；ETH空單加倉48%；GOLD多單減倉65.2%。\n\n市場對照（6地址）：\nBTC：多1／空3／空倉2；空加1、空回補1、空轉多1、持平3，多空分歧，調倉方向分歧。\nETH：多1／空3／空倉2；空加1、空回補1、空轉多1、持平3，多空分歧，調倉方向分歧。\nGOLD：多1／空3／空倉2；多減1、空回補2、持平3，多空分歧，調倉方向分歧。\n\n交叉判讀：6地址BTC持倉多空並存且調倉有增有減，沒有一致方向；已報ETF5／20日流出，長週線修復條件未過。多單加倉與空單回補需分開解讀。僅對照已報／舊窗口，不能判斷今日機構方向。資料日期不同，不推因果，仍需後續驗證。\n\n下一期驗證：看週收盤能否站穩均線、ETF能否持續轉流入，並觀察大戶是否保留新方向。若日收盤跌破暫定低點（2026-06-30，58,525美元）、再失守均線或ETF持續流出，修復推論需下修。\n\n資料時間：BTC價格 2026-11-20（已更新）；BTC ETF 2026-11-19（已更新）；ETH ETF 2026-11-19（已更新）。週線截至2026-11-15。\n\n範圍：大戶只按帶正負號數量判斷；回補不等於翻多，其他帳戶或現貨可能對沖。ETF淨申贖僅代表一項機構通道，含套利需求，亦未涵蓋企業、黃金基金等全部機構；6地址不代表全市場。\n\n尚有 5 個地址的近30天歷史待補；近日資料與歷史覆蓋分別標示。 本次 6 次SQL。\n\n影片預測節點參考。參考價截至2026/11/21 16:10（台灣）。\n\n黃金3,500：感恩節前（紐約11/26開始前），原說法屬「可能但不太可能；低信心替代情境，不是高機率必達目標」。參考價約3,528.05美元，尚需下跌約0.8%。期限尚未到。\n\n黃金時間節點：黃金感恩節附近候選低點（尚未到期）；黃金低點後上行至2027年2月（尚未到期）。粗窗口不作二元勝負判定。\n\nBTC時間節點：BTC偏弱至12月初／候選低點（尚未到期）；BTC候選低點後反彈至2027年2月（尚未到期）。粗窗口不作二元勝負判定。\n\nETH：影片沒有獨立預測節點。價格是Hyperliquid永續中間價，黃金不是影片GC期貨口徑；缺少原市場完整日內高低，不能證明曾／未觸價。預測不是底部確認。",
+  "updatedAt": "2026-11-22T07:54:48.296Z",
+  "from": "2026-11-21T08:10:01.432Z",
+  "report": "本期6地址三市場比較；各址依自身有效基準，首期先建基準。\n\n黃金大佬：BTC維持無倉；ETH維持無倉；黃金增加空單不到1%。\n\n大佬1：BTC空單數量持平；ETH空單數量持平；黃金維持無倉。\n\n大佬2：BTC減少空單10.2%；ETH減少空單不到1%；黃金增加空單不到1%。\n\n大佬3：BTC維持無倉；ETH維持無倉；黃金維持無倉。\n\n大佬4：BTC增加空單2.5%；ETH增加多單76.2%；黃金增加空單5.7%。\n\n大佬5：BTC增加多單72.2%；ETH減少空單51.6%；黃金增加多單134.5%。\n\n目前方向分布：BTC多1／空3／無倉2；ETH多1／空3／無倉2；黃金多1／空3／無倉2。\n\n下一期重點：多頭看回落留倉，空頭看反彈加空或連續回補；無倉看重開方向。新增數量能否保留，比單次成交更重要。\n\n範圍：僅可見地址與市場；回補不等於翻多，缺資料不當零變化，HYPE配對不代表整體避險。比較時段見個別日報。\n\n週期位階：BTC日收盤約58,851美元，今年-32.8%；距本輪最高收盤-52.9%，目前最深回撤-53.1%。\n\n資料日距高點約410天，歷史三輪到低點約364–406天。時間相似不等於已見底；本輪低點仍暫定，最終跌幅未定。\n\n底部候選規則（50／200週線約74,980美元／67,967美元，隨週更新）：連續兩週站穩200週線【資料不足】；連續兩週站穩50週線且均線不再下降【資料不足】；BTC ETF近5與20個完整交易日均淨流入【資料不足】。確認資料未齊。規則未經完整回測或機率校準，全部通過也不保證見底。\n\nBTC ETF：近5／20完整交易日淨流出13.1億美元／淨流出38.1億美元。較新日期未報齊，未當成零流量。ETH ETF（The Block已涵蓋8檔，非全體）：近5／20完整交易日淨流出2億美元／淨流出12.9億美元。較新日期未報齊，未當成零流量。\n\nBTC近5完整交易日：主要淨申購MSBT、主要淨贖回IBIT。ETH近5完整交易日：主要淨申購FETH、主要淨贖回ETHA。\n\n大戶本期方向（快照截至11/22 15:54台灣時間）：\n黃金大佬：BTC空倉持平；ETH空倉持平；GOLD空單加倉0.1%。\n大佬1：BTC空持平；ETH空持平；GOLD空倉持平。\n大佬2：BTC空單回補10.2%；ETH空單回補0.2%；GOLD空單加倉0.6%。\n大佬3：BTC空倉持平；ETH空倉持平；GOLD空倉持平。\n大佬4：BTC空單加倉2.5%；ETH多單加倉76.2%；GOLD空單加倉5.7%。\n大佬5：BTC多單加倉72.2%；ETH空單回補51.6%；GOLD多單加倉134.5%。\n\n市場對照（6地址）：\nBTC：多1／空3／空倉2；多加1、空加1、空回補1、持平3，多空分歧，調倉方向分歧。\nETH：多1／空3／空倉2；多加1、空回補2、持平3，多空分歧。\nGOLD：多1／空3／空倉2；多加1、空加3、持平2，多空分歧，調倉方向分歧。\n\n交叉判讀：6地址BTC持倉多空並存且調倉有增有減，沒有一致方向；已報ETF5／20日流出，長週線確認資料未齊。多單加倉與空單回補需分開解讀。僅對照已報／舊窗口，不能判斷今日機構方向。資料日期不同，不推因果，仍需後續驗證。\n\n下一期驗證：看週收盤能否站穩均線、ETF能否持續轉流入，並觀察大戶是否保留新方向。若日收盤跌破暫定低點（2026-06-30，58,525美元）、再失守均線或ETF持續流出，修復推論需下修。\n\n資料時間：BTC價格 2026-11-20（更新失敗，沿用上次有效資料）；BTC ETF 2026-11-19（已更新）；ETH ETF 2026-11-19（已更新）。週線截至2026-11-15。\n\n範圍：大戶只按帶正負號數量判斷；回補不等於翻多，其他帳戶或現貨可能對沖。ETF淨申贖僅代表一項機構通道，含套利需求，亦未涵蓋企業、黃金基金等全部機構；6地址不代表全市場。\n\n尚有 5 個地址的近30天歷史待補；近日資料與歷史覆蓋分別標示。 本次 6 次SQL。\n\n影片預測節點參考。參考價截至2026/11/22 15:54（台灣）。\n\n黃金3,500：感恩節前（紐約11/26開始前），原說法屬「可能但不太可能；低信心替代情境，不是高機率必達目標」。參考價約3,543.25美元，尚需下跌約1.2%。期限尚未到。\n\n黃金時間節點：黃金感恩節附近候選低點（尚未到期）；黃金低點後上行至2027年2月（尚未到期）。粗窗口不作二元勝負判定。\n\nBTC時間節點：BTC偏弱至12月初／候選低點（尚未到期）；BTC候選低點後反彈至2027年2月（尚未到期）。粗窗口不作二元勝負判定。\n\nETH：影片沒有獨立預測節點。價格是Hyperliquid永續中間價，黃金不是影片GC期貨口徑；缺少原市場完整日內高低，不能證明曾／未觸價。預測不是底部確認。",
   "marketContext": {
-    "generatedAt": "2026-11-21T08:09:56.591Z",
+    "generatedAt": "2026-11-22T07:54:22.082Z",
     "sources": {
-      "prices": {
-        "status": "updated",
-        "asOf": "2026-11-20",
-        "ageDays": 1,
-        "stale": false,
-        "fetchedAt": "2026-11-21T08:09:56.591Z",
-        "checkedAt": "2026-11-21T08:09:56.591Z",
-        "url": "https://community-api.coinmetrics.io/v4/timeseries/asset-metrics?assets=btc&metrics=PriceUSD&frequency=1d&start_time=2026-11-12&end_time=2026-11-21&page_size=10000"
-      },
       "ethEtf": {
         "status": "updated",
         "asOf": "2026-11-19",
-        "ageDays": 2,
+        "ageDays": 3,
         "stale": false,
-        "fetchedAt": "2026-11-21T08:09:56.591Z",
-        "checkedAt": "2026-11-21T08:09:56.591Z",
+        "fetchedAt": "2026-11-22T07:54:22.082Z",
+        "checkedAt": "2026-11-22T07:54:22.082Z",
         "url": "https://data.tbstat.com/dashboard/markets_structuredproducts_ethspotetfflows_daily_other.json",
         "provider": "The Block",
         "primaryError": "HTTP 403"
@@ -29,13 +20,23 @@
       "btcEtf": {
         "status": "updated",
         "asOf": "2026-11-19",
-        "ageDays": 2,
+        "ageDays": 3,
         "stale": false,
-        "fetchedAt": "2026-11-21T08:09:56.591Z",
-        "checkedAt": "2026-11-21T08:09:56.591Z",
+        "fetchedAt": "2026-11-22T07:54:22.082Z",
+        "checkedAt": "2026-11-22T07:54:22.082Z",
         "url": "https://data.tbstat.com/dashboard/markets_structuredproducts_btcspotetfflows_daily_other.json",
         "provider": "The Block",
         "primaryError": "HTTP 403"
+      },
+      "prices": {
+        "status": "cached",
+        "asOf": "2026-11-20",
+        "ageDays": 2,
+        "stale": false,
+        "fetchedAt": "2026-11-21T08:09:56.591Z",
+        "checkedAt": "2026-11-22T07:54:22.082Z",
+        "url": "https://community-api.coinmetrics.io/v4/timeseries/asset-metrics?assets=btc&metrics=PriceUSD&frequency=1d&start_time=2026-11-13&end_time=2026-11-22&page_size=10000",
+        "error": "The operation was aborted due to timeout"
       }
     },
     "btc": {
@@ -53,7 +54,7 @@
       "drawdownPct": -52.85297258655284,
       "maxDrawdownPct": -53.11409452054985,
       "daysSincePeak": 410,
-      "calendarDaysSincePeak": 411,
+      "calendarDaysSincePeak": 412,
       "daysToLow": 267,
       "weeklyAsOf": "2026-11-15",
       "ma50WeekUsd": 74979.8458297683,
@@ -517,16 +518,16 @@
       {
         "id": "ma200",
         "label": "連續兩週站穩200週線",
-        "status": "not_passed",
+        "status": "insufficient",
         "asOf": "2026-11-15",
-        "reason": "最近兩週尚未都收在各自均線上方。"
+        "reason": "需最新兩個連續完整週與各週自己的均線。"
       },
       {
         "id": "ma50",
         "label": "連續兩週站穩50週線且均線不再下降",
-        "status": "not_passed",
+        "status": "insufficient",
         "asOf": "2026-11-15",
-        "reason": "最近兩週尚未都收在各自均線上方。"
+        "reason": "需最新兩個連續完整週與各週自己的均線。"
       },
       {
         "id": "btcEtf",
@@ -552,8 +553,8 @@
       {
         "address": "0x46921f6961bdb411b756c9712f6bdb58fbd9164f",
         "name": "黃金大佬",
-        "asOf": "2026-11-21T08:10:01.432Z",
-        "from": "2026-11-19T17:34:08.063Z",
+        "asOf": "2026-11-22T07:54:48.296Z",
+        "from": "2026-11-21T08:10:01.432Z",
         "markets": {
           "BTC": {
             "before": 0,
@@ -572,21 +573,21 @@
             "text": "空倉持平"
           },
           "xyz:GOLD": {
-            "before": -7656.8263,
-            "after": -7616.8608,
-            "action": "cover_short",
+            "before": -7616.8608,
+            "after": -7626.2087,
+            "action": "add_short",
             "direction": "short",
-            "delta": 39.96549999999934,
-            "remainingFraction": 0.9947804092147161,
-            "text": "空單回補0.5%"
+            "delta": -9.347899999999754,
+            "remainingFraction": 1.001227264124349,
+            "text": "空單加倉0.1%"
           }
         }
       },
       {
         "address": "0x45d26f28196d226497130c4bac709d808fed4029",
         "name": "大佬1",
-        "asOf": "2026-11-21T08:10:01.888Z",
-        "from": "2026-11-19T17:34:08.646Z",
+        "asOf": "2026-11-22T07:54:48.706Z",
+        "from": "2026-11-21T08:10:01.888Z",
         "markets": {
           "BTC": {
             "before": -436,
@@ -617,42 +618,43 @@
       {
         "address": "0xdf954bbe619273a56e0cfa90dad8382195dc7d72",
         "name": "大佬2",
-        "asOf": "2026-11-21T08:10:02.349Z",
-        "from": "2026-11-19T17:34:09.379Z",
+        "asOf": "2026-11-22T07:54:49.359Z",
+        "from": "2026-11-21T08:10:02.349Z",
         "markets": {
           "BTC": {
-            "before": -657.51048,
-            "after": -667.59045,
-            "action": "add_short",
-            "direction": "short",
-            "delta": -10.079970000000003,
-            "remainingFraction": 1.0153305084962296,
-            "text": "空單加倉1.5%"
-          },
-          "ETH": {
-            "before": -26632.3673,
-            "after": -24923.8702,
+            "before": -667.59045,
+            "after": -599.72403,
             "action": "cover_short",
             "direction": "short",
-            "delta": 1708.4971000000005,
-            "remainingFraction": 0.9358488458515665,
-            "text": "空單回補6.4%"
+            "delta": 67.86642000000006,
+            "remainingFraction": 0.8983412360077948,
+            "text": "空單回補10.2%"
+          },
+          "ETH": {
+            "before": -24923.8702,
+            "after": -24870.2932,
+            "action": "cover_short",
+            "direction": "short",
+            "delta": 53.577000000001135,
+            "remainingFraction": 0.9978503739760287,
+            "text": "空單回補0.2%"
           },
           "xyz:GOLD": {
             "before": -14.9024,
-            "after": -14.9024,
-            "action": "unchanged",
+            "after": -14.9964,
+            "action": "add_short",
             "direction": "short",
-            "delta": 0,
-            "text": "空持平"
+            "delta": -0.09399999999999942,
+            "remainingFraction": 1.006307708825424,
+            "text": "空單加倉0.6%"
           }
         }
       },
       {
         "address": "0x082e843a431aef031264dc232693dd710aedca88",
         "name": "大佬3",
-        "asOf": "2026-11-21T08:10:02.788Z",
-        "from": "2026-11-19T17:34:09.961Z",
+        "asOf": "2026-11-22T07:54:49.756Z",
+        "from": "2026-11-21T08:10:02.788Z",
         "markets": {
           "BTC": {
             "before": 0,
@@ -683,68 +685,70 @@
       {
         "address": "0x7fdafde5cfb5465924316eced2d3715494c517d1",
         "name": "大佬4",
-        "asOf": "2026-11-21T08:10:03.280Z",
-        "from": "2026-11-19T17:34:10.557Z",
+        "asOf": "2026-11-22T07:54:50.266Z",
+        "from": "2026-11-21T08:10:03.280Z",
         "markets": {
           "BTC": {
-            "before": -851.0639,
-            "after": -780.52278,
-            "action": "cover_short",
+            "before": -780.52278,
+            "after": -800.26162,
+            "action": "add_short",
             "direction": "short",
-            "delta": 70.54111999999998,
-            "remainingFraction": 0.9171141908380793,
-            "text": "空單回補8.3%"
+            "delta": -19.738839999999982,
+            "remainingFraction": 1.025289255491044,
+            "text": "空單加倉2.5%"
           },
           "ETH": {
-            "before": -3946.3038,
-            "after": 2655.172,
-            "action": "reverse_long",
+            "before": 2655.172,
+            "after": 4678.3164,
+            "action": "add_long",
             "direction": "long",
-            "delta": 6601.4758,
-            "text": "空轉多"
+            "delta": 2023.1443999999997,
+            "remainingFraction": 1.7619635940722482,
+            "text": "多單加倉76.2%"
           },
           "xyz:GOLD": {
-            "before": -1213.7622,
-            "after": -1106.0807,
-            "action": "cover_short",
+            "before": -1106.0807,
+            "after": -1169.4117,
+            "action": "add_short",
             "direction": "short",
-            "delta": 107.68149999999991,
-            "remainingFraction": 0.911282869082593,
-            "text": "空單回補8.9%"
+            "delta": -63.33100000000013,
+            "remainingFraction": 1.0572571241863276,
+            "text": "空單加倉5.7%"
           }
         }
       },
       {
         "address": "0xecb63caa47c7c4e77f60f1ce858cf28dc2b82b00",
         "name": "大佬5",
-        "asOf": "2026-11-21T08:10:03.889Z",
-        "from": "2026-11-19T17:34:11.441Z",
+        "asOf": "2026-11-22T07:54:50.808Z",
+        "from": "2026-11-21T08:10:03.889Z",
         "markets": {
           "BTC": {
-            "before": -48.26099,
-            "after": 213.10509,
-            "action": "reverse_long",
+            "before": 213.10509,
+            "after": 367.02896,
+            "action": "add_long",
             "direction": "long",
-            "delta": 261.36608,
-            "text": "空轉多"
+            "delta": 153.92387,
+            "remainingFraction": 1.7222909129012358,
+            "text": "多單加倉72.2%"
           },
           "ETH": {
-            "before": -8541.8582,
-            "after": -12640.4169,
-            "action": "add_short",
+            "before": -12640.4169,
+            "after": -6123.6453,
+            "action": "cover_short",
             "direction": "short",
-            "delta": -4098.5587,
-            "remainingFraction": 1.4798205032249305,
-            "text": "空單加倉48%"
+            "delta": 6516.7716,
+            "remainingFraction": 0.48444963077127623,
+            "text": "空單回補51.6%"
           },
           "xyz:GOLD": {
-            "before": 54.0097,
-            "after": 18.793,
-            "action": "reduce_long",
+            "before": 18.793,
+            "after": 44.0754,
+            "action": "add_long",
             "direction": "long",
-            "delta": -35.2167,
-            "remainingFraction": 0.34795601530836123,
-            "text": "多單減倉65.2%"
+            "delta": 25.282400000000003,
+            "remainingFraction": 2.3453094237215986,
+            "text": "多單加倉134.5%"
           }
         }
       }
@@ -760,9 +764,9 @@
         },
         "actionCounts": {
           "unchanged": 3,
-          "add_short": 1,
           "cover_short": 1,
-          "reverse_long": 1
+          "add_short": 1,
+          "add_long": 1
         },
         "comparedCount": 6,
         "baselineCount": 0,
@@ -771,8 +775,8 @@
         "directionSplit": true,
         "adjustmentSplit": true,
         "nearlyFlatShorts": false,
-        "priorShortCount": 4,
-        "text": "BTC：多1／空3／空倉2；空加1、空回補1、空轉多1、持平3，多空分歧，調倉方向分歧。"
+        "priorShortCount": 3,
+        "text": "BTC：多1／空3／空倉2；多加1、空加1、空回補1、持平3，多空分歧，調倉方向分歧。"
       },
       "ETH": {
         "market": "ETH",
@@ -784,19 +788,18 @@
         },
         "actionCounts": {
           "unchanged": 3,
-          "cover_short": 1,
-          "reverse_long": 1,
-          "add_short": 1
+          "cover_short": 2,
+          "add_long": 1
         },
         "comparedCount": 6,
         "baselineCount": 0,
-        "increasedCount": 2,
-        "decreasedCount": 1,
+        "increasedCount": 3,
+        "decreasedCount": 0,
         "directionSplit": true,
-        "adjustmentSplit": true,
+        "adjustmentSplit": false,
         "nearlyFlatShorts": false,
-        "priorShortCount": 4,
-        "text": "ETH：多1／空3／空倉2；空加1、空回補1、空轉多1、持平3，多空分歧，調倉方向分歧。"
+        "priorShortCount": 3,
+        "text": "ETH：多1／空3／空倉2；多加1、空回補2、持平3，多空分歧。"
       },
       "xyz:GOLD": {
         "market": "xyz:GOLD",
@@ -807,28 +810,28 @@
           "unknown": 0
         },
         "actionCounts": {
-          "cover_short": 2,
-          "unchanged": 3,
-          "reduce_long": 1
+          "add_short": 3,
+          "unchanged": 2,
+          "add_long": 1
         },
         "comparedCount": 6,
         "baselineCount": 0,
-        "increasedCount": 2,
-        "decreasedCount": 1,
+        "increasedCount": 1,
+        "decreasedCount": 3,
         "directionSplit": true,
         "adjustmentSplit": true,
         "nearlyFlatShorts": false,
         "priorShortCount": 3,
-        "text": "GOLD：多1／空3／空倉2；多減1、空回補2、持平3，多空分歧，調倉方向分歧。"
+        "text": "GOLD：多1／空3／空倉2；多加1、空加3、持平2，多空分歧，調倉方向分歧。"
       }
     },
-    "btcAlignment": "BTC：多1／空3／空倉2；空加1、空回補1、空轉多1、持平3，多空分歧，調倉方向分歧。",
+    "btcAlignment": "BTC：多1／空3／空倉2；多加1、空加1、空回補1、持平3，多空分歧，調倉方向分歧。",
     "nearlyFlatShorts": false,
     "goldDirectionSplit": true,
     "goldAdjustmentSplit": true,
     "scope": "僅6個可見地址及本期數量比較，不代表全市場或完整資產組合。"
   },
-  "strategyAsOf": "2026-11-21T08:09:56.000Z",
+  "strategyAsOf": "2026-11-22T07:54:22.000Z",
   "strategyStatus": "尚有 5 個地址的近30天歷史待補；近日資料與歷史覆蓋分別標示。 本次 6 次SQL。",
   "usage": {
     "sqlCalls": 6,
@@ -836,11 +839,11 @@
   },
   "forecastTracking": {
     "schemaVersion": 1,
-    "evaluatedAt": "2026-11-21T08:10:03.898Z",
+    "evaluatedAt": "2026-11-22T07:54:50.816Z",
     "registryAsOf": "2026-11-18",
     "priceAsOf": {
-      "BTC": "2026-11-21T08:10:01.432Z",
-      "GOLD": "2026-11-21T08:10:01.432Z"
+      "BTC": "2026-11-22T07:54:48.296Z",
+      "GOLD": "2026-11-22T07:54:48.296Z"
     },
     "nodes": [
       {
@@ -881,10 +884,10 @@
         "sourceMarketComparable": false,
         "referenceInstrument": "Hyperliquid BTC perpetual midpoint",
         "referenceStatus": "available",
-        "referencePriceUsd": 57703.5,
-        "quoteAsOf": "2026-11-21T08:10:01.432Z",
+        "referencePriceUsd": 59122.5,
+        "quoteAsOf": "2026-11-22T07:54:48.296Z",
         "quoteOlderCalendarDay": false,
-        "quoteAgeHours": 0.000685,
+        "quoteAgeHours": 0.0007,
         "gapUsd": null,
         "requiredMovePct": null,
         "referenceWithinThreshold": null,
@@ -930,10 +933,10 @@
         "sourceMarketComparable": false,
         "referenceInstrument": "Hyperliquid BTC perpetual midpoint",
         "referenceStatus": "available",
-        "referencePriceUsd": 57703.5,
-        "quoteAsOf": "2026-11-21T08:10:01.432Z",
+        "referencePriceUsd": 59122.5,
+        "quoteAsOf": "2026-11-22T07:54:48.296Z",
         "quoteOlderCalendarDay": false,
-        "quoteAgeHours": 0.000685,
+        "quoteAgeHours": 0.0007,
         "gapUsd": null,
         "requiredMovePct": null,
         "referenceWithinThreshold": null,
@@ -979,10 +982,10 @@
         "sourceMarketComparable": false,
         "referenceInstrument": "Hyperliquid BTC perpetual midpoint",
         "referenceStatus": "available",
-        "referencePriceUsd": 57703.5,
-        "quoteAsOf": "2026-11-21T08:10:01.432Z",
+        "referencePriceUsd": 59122.5,
+        "quoteAsOf": "2026-11-22T07:54:48.296Z",
         "quoteOlderCalendarDay": false,
-        "quoteAgeHours": 0.000685,
+        "quoteAgeHours": 0.0007,
         "gapUsd": null,
         "requiredMovePct": null,
         "referenceWithinThreshold": null,
@@ -1029,19 +1032,19 @@
         "sourceMarketComparable": false,
         "referenceInstrument": "Hyperliquid xyz:GOLD perpetual midpoint",
         "referenceStatus": "available",
-        "referencePriceUsd": 3528.05,
-        "quoteAsOf": "2026-11-21T08:10:01.432Z",
+        "referencePriceUsd": 3543.25,
+        "quoteAsOf": "2026-11-22T07:54:48.296Z",
         "quoteOlderCalendarDay": false,
-        "quoteAgeHours": 0.000685,
-        "gapUsd": 28.050000000000182,
-        "requiredMovePct": -0.7950567593996705,
+        "quoteAgeHours": 0.0007,
+        "gapUsd": 43.25,
+        "requiredMovePct": -1.220630776829179,
         "referenceWithinThreshold": false,
         "referenceTouchObserved": false,
         "firstReferenceTouch": null,
-        "referenceObservationCount": 5,
+        "referenceObservationCount": 6,
         "lastObservation": {
-          "quoteAsOf": "2026-11-21T08:10:01.432Z",
-          "priceUsd": 3528.05,
+          "quoteAsOf": "2026-11-22T07:54:48.296Z",
+          "priceUsd": 3543.25,
           "instrument": "Hyperliquid xyz:GOLD perpetual midpoint"
         },
         "observationUpdate": "new_snapshot"
@@ -1082,10 +1085,10 @@
         "sourceMarketComparable": false,
         "referenceInstrument": "Hyperliquid xyz:GOLD perpetual midpoint",
         "referenceStatus": "available",
-        "referencePriceUsd": 3528.05,
-        "quoteAsOf": "2026-11-21T08:10:01.432Z",
+        "referencePriceUsd": 3543.25,
+        "quoteAsOf": "2026-11-22T07:54:48.296Z",
         "quoteOlderCalendarDay": false,
-        "quoteAgeHours": 0.000685,
+        "quoteAgeHours": 0.0007,
         "gapUsd": null,
         "requiredMovePct": null,
         "referenceWithinThreshold": null,
@@ -1130,10 +1133,10 @@
         "sourceMarketComparable": false,
         "referenceInstrument": "Hyperliquid xyz:GOLD perpetual midpoint",
         "referenceStatus": "available",
-        "referencePriceUsd": 3528.05,
-        "quoteAsOf": "2026-11-21T08:10:01.432Z",
+        "referencePriceUsd": 3543.25,
+        "quoteAsOf": "2026-11-22T07:54:48.296Z",
         "quoteOlderCalendarDay": false,
-        "quoteAgeHours": 0.000685,
+        "quoteAgeHours": 0.0007,
         "gapUsd": null,
         "requiredMovePct": null,
         "referenceWithinThreshold": null,
@@ -1178,10 +1181,10 @@
         "sourceMarketComparable": false,
         "referenceInstrument": "Hyperliquid xyz:GOLD perpetual midpoint",
         "referenceStatus": "available",
-        "referencePriceUsd": 3528.05,
-        "quoteAsOf": "2026-11-21T08:10:01.432Z",
+        "referencePriceUsd": 3543.25,
+        "quoteAsOf": "2026-11-22T07:54:48.296Z",
         "quoteOlderCalendarDay": false,
-        "quoteAgeHours": 0.000685,
+        "quoteAgeHours": 0.0007,
         "gapUsd": null,
         "requiredMovePct": null,
         "referenceWithinThreshold": null,
@@ -1228,10 +1231,10 @@
         "sourceMarketComparable": false,
         "referenceInstrument": "Hyperliquid xyz:GOLD perpetual midpoint",
         "referenceStatus": "available",
-        "referencePriceUsd": 3528.05,
-        "quoteAsOf": "2026-11-21T08:10:01.432Z",
+        "referencePriceUsd": 3543.25,
+        "quoteAsOf": "2026-11-22T07:54:48.296Z",
         "quoteOlderCalendarDay": false,
-        "quoteAgeHours": 0.000685,
+        "quoteAgeHours": 0.0007,
         "gapUsd": null,
         "requiredMovePct": null,
         "referenceWithinThreshold": null,
@@ -1277,10 +1280,10 @@
         "sourceMarketComparable": false,
         "referenceInstrument": "Hyperliquid xyz:GOLD perpetual midpoint",
         "referenceStatus": "available",
-        "referencePriceUsd": 3528.05,
-        "quoteAsOf": "2026-11-21T08:10:01.432Z",
+        "referencePriceUsd": 3543.25,
+        "quoteAsOf": "2026-11-22T07:54:48.296Z",
         "quoteOlderCalendarDay": false,
-        "quoteAgeHours": 0.000685,
+        "quoteAgeHours": 0.0007,
         "gapUsd": null,
         "requiredMovePct": null,
         "referenceWithinThreshold": null,
@@ -1325,10 +1328,10 @@
         "sourceMarketComparable": false,
         "referenceInstrument": "Hyperliquid xyz:GOLD perpetual midpoint",
         "referenceStatus": "available",
-        "referencePriceUsd": 3528.05,
-        "quoteAsOf": "2026-11-21T08:10:01.432Z",
+        "referencePriceUsd": 3543.25,
+        "quoteAsOf": "2026-11-22T07:54:48.296Z",
         "quoteOlderCalendarDay": false,
-        "quoteAgeHours": 0.000685,
+        "quoteAgeHours": 0.0007,
         "gapUsd": null,
         "requiredMovePct": null,
         "referenceWithinThreshold": null,
@@ -1380,12 +1383,12 @@
         "sourceMarketComparable": false,
         "referenceInstrument": "Hyperliquid xyz:GOLD perpetual midpoint",
         "referenceStatus": "available",
-        "referencePriceUsd": 3528.05,
-        "quoteAsOf": "2026-11-21T08:10:01.432Z",
+        "referencePriceUsd": 3543.25,
+        "quoteAsOf": "2026-11-22T07:54:48.296Z",
         "quoteOlderCalendarDay": false,
-        "quoteAgeHours": 0.000685,
-        "gapUsd": 28.050000000000182,
-        "requiredMovePct": -0.7950567593996705,
+        "quoteAgeHours": 0.0007,
+        "gapUsd": 43.25,
+        "requiredMovePct": -1.220630776829179,
         "referenceWithinThreshold": false,
         "referenceTouchObserved": false,
         "firstReferenceTouch": null,
@@ -1394,7 +1397,7 @@
         "observationUpdate": "outside_window"
       }
     ],
-    "report": "影片預測節點參考。參考價截至2026/11/21 16:10（台灣）。\n\n黃金3,500：感恩節前（紐約11/26開始前），原說法屬「可能但不太可能；低信心替代情境，不是高機率必達目標」。參考價約3,528.05美元，尚需下跌約0.8%。期限尚未到。\n\n黃金時間節點：黃金感恩節附近候選低點（尚未到期）；黃金低點後上行至2027年2月（尚未到期）。粗窗口不作二元勝負判定。\n\nBTC時間節點：BTC偏弱至12月初／候選低點（尚未到期）；BTC候選低點後反彈至2027年2月（尚未到期）。粗窗口不作二元勝負判定。\n\nETH：影片沒有獨立預測節點。價格是Hyperliquid永續中間價，黃金不是影片GC期貨口徑；缺少原市場完整日內高低，不能證明曾／未觸價。預測不是底部確認。",
+    "report": "影片預測節點參考。參考價截至2026/11/22 15:54（台灣）。\n\n黃金3,500：感恩節前（紐約11/26開始前），原說法屬「可能但不太可能；低信心替代情境，不是高機率必達目標」。參考價約3,543.25美元，尚需下跌約1.2%。期限尚未到。\n\n黃金時間節點：黃金感恩節附近候選低點（尚未到期）；黃金低點後上行至2027年2月（尚未到期）。粗窗口不作二元勝負判定。\n\nBTC時間節點：BTC偏弱至12月初／候選低點（尚未到期）；BTC候選低點後反彈至2027年2月（尚未到期）。粗窗口不作二元勝負判定。\n\nETH：影片沒有獨立預測節點。價格是Hyperliquid永續中間價，黃金不是影片GC期貨口徑；缺少原市場完整日內高低，不能證明曾／未觸價。預測不是底部確認。",
     "limitations": [
       "每日Hyperliquid參考快照不是影片原市場的完整盤中高低資料，沒有精確命中／失準判定。",
       "未記錄參考觸價不等於盤中未達；回補空單、ETF流量或底部規則不證明影片預測成立。",
