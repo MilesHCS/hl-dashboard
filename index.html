@@ -211,6 +211,347 @@
 </div>
 
 <script>
+// OUTLOOK_COMPONENT_20261126
+/* Market outlook comparison, frozen research version 2026-11-26.
+ * Buildless and dependency-free. All variable content is inserted as text.
+ * Embed this script once, then use <market-outlook-comparison>.
+ */
+(() => {
+  'use strict';
+  if (!globalThis.customElements || customElements.get('market-outlook-comparison')) return;
+
+  const VERSION = '2026-11-26';
+  const STORAGE_KEY = 'hl.forecast-comparison.' + VERSION;
+  let memoryPreferences = null;
+  const PERIODS = [
+    ['2026/11/26', '本次研究起點'], ['2026/12', '年底前'],
+    ['2027 Q1', '1–3月'], ['2027 Q2', '4–6月'],
+    ['2027 Q3', '7–9月'], ['2027 Q4', '10–12月／期末']
+  ];
+  const SCENARIOS = {
+    base: { label: '基準修復', short: '基準', description: '實質利率不再持續攀升、信用沒有惡化成危機，資金贖回壓力逐步緩和。這是一組待驗證前提，並非已成立的市場狀態。' },
+    strong: { label: '偏強情境', short: '偏強', description: '美元與實質利率壓力下降、信用穩定，獲利與資金需求共同改善。各資產仍需要自己的價格與資金流確認。' },
+    stress: { label: '壓力情境', short: '壓力', description: '美元或實質利率重新升高，或獲利與信用環境明顯惡化。美債殖利率若因衰退而下降，也不代表風險資產已轉好。' }
+  };
+  const SOURCES = {
+    btc: ['Coinbase BTC美元現貨API', 'https://api.coinbase.com/v2/prices/BTC-USD/spot'],
+    eth: ['Coinbase ETH價格頁', 'https://www.coinbase.com/price/ethereum'],
+    goldPrice: ['Reuters黃金現貨報導（轉載）', 'https://www.brecorder.com/news/40450827/gold-steadies-after-hitting-over-1-year-low-fed-outlook-in-focus'],
+    spx: ['FRED／S&P 500收盤指數', 'https://fred.stlouisfed.org/series/SP500'],
+    dollar: ['Fed廣義美元指數（不是DXY）', 'https://fred.stlouisfed.org/series/DTWEXBGS'],
+    nominal: ['10年美債名目殖利率', 'https://fred.stlouisfed.org/series/DGS10'],
+    real: ['10年美債實質殖利率', 'https://fred.stlouisfed.org/series/DFII10'],
+    credit: ['美國高收益債信用利差', 'https://fred.stlouisfed.org/series/BAMLH0A0HYM2'],
+    btcEtf: ['Farside BTC ETF資金流', 'https://farside.co.uk/btc/'],
+    ethEtf: ['Farside ETH ETF資金流', 'https://farside.co.uk/eth/'],
+    earnings: ['FactSet 2026/11/20獲利報告', 'https://advantage.factset.com/hubfs/Website/Resources%20Section/Research%20Desk/Earnings%20Insight/EarningsInsight_112026.pdf'],
+    goldDemand: ['世界黃金協會Q3需求報告', 'https://www.gold.org/news-and-events/press-releases/central-bank-buying-and-etf-inflows-support-gold-demand-q3'],
+    ether: ['Ethereum：ETH用途', 'https://ethereum.org/what-is-ether/']
+  };
+  const MARKETS = [
+    {
+      id: 'btc', name: 'BTC', instrument: '助理：BTC現貨參考', reference: '參考約60,823美元 · 11/26讀取',
+      referenceDetail: 'Coinbase BTC-USD現貨API讀取值約60,823美元；API沒有提供這筆報價的交易時間戳，不能寫成收盤價或與其他市場的同秒報價。',
+      ranges: { base: '55,000–85,000', strong: '85,000–120,000', stress: '35,000–55,000' },
+      reasoning: '高波動修復候選。ETF資金流、美元與實質利率、槓桿狀態及週線價格結構，需要一起驗證；四年週期不能單獨保證2027上漲。',
+      support: ['ETF連續多週轉淨申購，5／20個完整交易日窗口都改善。', '週線形成較高低點，突破後可以維持；美元與實質利率壓力同步減輕。'],
+      risk: ['同口徑價格破低後無法收復，且ETF持續贖回。', '美元、實質利率與信用壓力同步上升，或反彈依賴過熱槓桿。'],
+      sourceKeys: ['btc', 'btcEtf', 'real', 'dollar'],
+      video: [
+        { id: 'btc-v-low', from: 0, span: 2, title: '12月初候選低點', subtitle: '先偏弱或橫盤 · 粗窗口', recorded: '2026/11/3 · 05:14–05:26、05:38–05:52', detail: '原說法是偏弱至12月初、可能出現低點。追蹤暫以紐約11/27–12/10為粗窗口，不是作者給出的精確轉折日；沒有獨立口述價位。' },
+        { id: 'btc-v-rally', from: 2, span: 1, title: '至2月反彈？', subtitle: '先有候選低點的順序待驗證', recorded: '2026/11/3 · 05:26–05:31', detail: '影片路徑為候選低點之後反彈至2027年2月；沒有明確價格目標，不將畫面矩形邊緣當成承諾。' },
+        { id: 'btc-v-weak', from: 3, span: 2, title: '再弱至6／7月？', subtitle: '保留原路徑順序', recorded: '2026/11/3 · 05:31–05:38', detail: '影片提出反彈後再弱至6或7月的候選路徑。這不是本研究預先指定的下跌月份，也未證實為長期底部時間。' }
+      ]
+    },
+    {
+      id: 'eth', name: 'ETH', instrument: '助理：ETH現貨參考', reference: '參考約1,698美元 · 11/26讀取',
+      referenceDetail: 'Coinbase價格頁讀取值約1,698美元；沒有明確的交易時間戳。這是獨立的ETH分析，不能把BTC或NASDAQ影片的節點套到ETH。',
+      ranges: { base: '1,350–2,550', strong: '2,550–3,800', stress: '800–1,350' },
+      reasoning: '上漲彈性可能較大，但方向信心較低。除風險資金外，也要看ETH／BTC相對強弱，以及網路使用、手續費、銷毀／發行及質押需求如何轉成代幣價值。',
+      support: ['ETF及風險資金改善，同時ETH／BTC停止弱勢並能持續。', '網路使用與質押需求改善，且價值捕捉有支持，而不只交易筆數增加。'],
+      risk: ['BTC反彈但ETH／BTC仍持續走弱，不能預設一定補漲。', '資金流惡化，或使用量增加但代幣需求與收入沒有相應改善。'],
+      sourceKeys: ['eth', 'ethEtf', 'ether', 'real'], video: []
+    },
+    {
+      id: 'gold', name: '黃金', instrument: '影片：COMEX GC｜助理：XAU現貨', reference: '參考3,580.87美元／盎司 · 11/26 11:17台灣',
+      referenceDetail: '助理情境以Reuters於2026/11/26 03:17 GMT（台灣11:17）報導的黃金現貨3,580.87美元／盎司作參考。不是影片的COMEX GC，也不是儀表板的Hyperliquid xyz:GOLD。',
+      ranges: { base: '3,400–4,300', strong: '4,300–5,000', stress: '2,800–3,400' },
+      reasoning: '中期需求支柱較多，但實質利率與美元仍可能造成壓力。Q3央行及ETF需求是季度歷史，不代表11月已確認見底。',
+      support: ['實質利率下降、美元轉弱，同時黃金ETF與央行需求延續。', '價格修復能持續，不依單次觸價或影片日期確認最低點。'],
+      risk: ['實質利率與美元持續升高，並伴隨ETF贖回。', '需求支持減弱；不能只因美股下跌就預設黃金必然下跌或上漲。'],
+      sourceKeys: ['goldPrice', 'goldDemand', 'real', 'dollar'],
+      video: [
+        { id: 'gold-v-low', from: 0, span: 1, title: '感恩節附近低點？', subtitle: '粗窗口 · 非單日', recorded: '2026/11/16 · 09:05–09:17', detail: '候選低點暫以紐約11/23–11/29作追蹤粗窗口，並非作者的精確截止或底部確認規則。' },
+        { id: 'gold-v-3500', from: 0, span: 1, row: 2, title: '3,500低信心情境', subtitle: '原日界已到 · 結果待核對', recorded: '2026/11/10 · 10:24–10:34', detail: '原話為感恩節前可能到3,500，但「可能但不太可能」。系統選定紐約11/26開始（台灣11/26 13:00）為追蹤日界，不是作者給出的精確時刻。該日界已到，缺同口徑COMEX GC完整盤中高低，仍只能待核對。較晚3,500是另一個有前提的情境，不自動延長或覆蓋本項。單次XAU或xyz:GOLD報價不能證明原目標命中／失準。' },
+        { id: 'gold-v-feb', from: 2, span: 1, title: '至2月上行？', subtitle: '候選低點之後', recorded: '2026/11/16 · 09:05–09:17', detail: '影片路徑先假設感恩節附近形成低點，再看上行至2027年2月。前置低點及後續路徑均待驗證。' },
+        { id: 'gold-v-may', from: 3, span: 1, title: '回落至5月？', subtitle: '影片原順序', recorded: '2026/11/16 · 09:17–09:44', detail: '保留影片2月反彈後回落至5月的路徑，不把它當本研究預定的轉折月。' },
+        { id: 'gold-v-july', from: 4, span: 1, title: '再上行至7月？', subtitle: '遠期路徑仍待驗證', recorded: '2026/11/16 · 09:17–09:44', detail: '影片保留5月低點後再上行至7月的候選路徑。更遠的條件情境沒有在此自動啟動，也不拿它延期原3,500項目。' }
+      ]
+    },
+    {
+      id: 'spx', name: '美股', instrument: '影片：ES期貨｜助理：S&P 500現貨指數', reference: '參考7,201.09點 · 11/24收盤',
+      referenceDetail: '助理情境以S&P 500現貨價格指數11/24收盤7,201.09為參考，不含股息與匯率。影片談的是ES期貨；不能直接把兩種口徑放在一起判定命中。',
+      ranges: { base: '7,600–8,300', strong: '8,800–10,000', stress: '5,300–6,500' },
+      reasoning: '獲利增長可支持修復，但高利率仍限制估值。2027年底要看當時未來12個月獲利，不能機械把CY2027獲利增幅當指數報酬。',
+      support: ['固定年度的獲利預估改善，營收、現金流及市場廣度共同支持。', '實質利率與信用壓力緩和，估值沒有被持續壓縮。'],
+      risk: ['多個行業的獲利預估持續下修，或漲勢只靠少數權重股。', '實質利率與信用利差同步上升，或衰退導致獲利下修。'],
+      sourceKeys: ['spx', 'earnings', 'real', 'credit'],
+      video: [
+        { id: 'spx-v-dec', from: 1, span: 1, title: '年底前約7,800？', subtitle: 'ES期貨 · 版本有修正', recorded: '2026/11/3、11/10、11/16系列整理', detail: '影片不同版本分別提到11月底前／12月初至少7,800，以及反彈後回落、12月中後再上行。這裡只保留概略順序；精確片中時間請看原影片清單，不補造秒數。標的是ES期貨。' },
+        { id: 'spx-v-q1', from: 2, span: 1, title: '1月8,000→3月7,000？', subtitle: 'ES期貨 · 候選高低', recorded: '2026/11/3、11/10、11/16系列整理', detail: '保留影片1月初約8,000、之後回落至3月約7,000的候選版本。新舊說法有修改，不能拼成從未改變的一條路徑；也不直接對助理的SPX現貨情境評分。' },
+        { id: 'spx-v-mid', from: 3, span: 2, title: '年中可能逾9,000？', subtitle: '3月候選低點之後', recorded: '2026/11/10等版本整理', detail: '影片提出3月低點後反彈至年中／7月，部分版本說可能超過9,000。這是原影片ES期貨的價位與候選順序，不是助理採用的必達目標。' },
+        { id: 'spx-v-oct', from: 5, span: 1, title: '10月條件性轉弱？', subtitle: '歷史類比有前提', recorded: '2026/11月系列歷史類比', detail: '若影片所用歷史類比重演，才有7月至10月較大跌勢的情境。類比不是必然事件，不指定2027年10月一定落底。' }
+      ]
+    }
+  ];
+  const PHASES = [
+    { id: 'yearend', from: 0, span: 2, title: '年底前：反覆核對', subtitle: '沒有精準落底日', detail: '研究起點至2026年底，以反覆震盪與修復測試作觀察主線。這是核對窗口，不是預言每個市場必須先跌或在12月某日落底。' },
+    { id: 'q1', from: 2, span: 1, title: '修復候選', subtitle: '看留倉、資金與價格', detail: '2027第1季先核對資金與價格能否一起改善。反彈後能否保留較高低點，比單日急漲更有意義；不指定2月必定見高。' },
+    { id: 'q2', from: 3, span: 1, title: '驗證基本面／資金', subtitle: '條件未兌現就修正', detail: '2027第2季是檢查假設是否兌現的窗口。企業獲利、ETF流向及信用環境若未改善，需降低修復情境權重；並非預先指定5月或6月一定下跌。' },
+    { id: 'q3', from: 4, span: 1, title: '有前提延續', subtitle: '逐期確認，不硬排轉折', detail: '2027下半年是否延續修復，取決於獲利、資金及利率條件。各資產可以走不同情境，不能把一個月份或一位交易者的方向套到全部市場。' }
+  ];
+  const CSS = [
+    ':host{display:block;min-width:0;color:#edf3ef;font:14px/1.6 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei",sans-serif}',
+    '*{box-sizing:border-box}button,a,summary{touch-action:manipulation}button{font:inherit;cursor:pointer}button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid #a2cfff;outline-offset:3px}',
+    '.frame{border:1px solid #34413b;border-radius:16px;padding:20px;background:#18201c;color-scheme:dark;max-width:100%;min-width:0}.kicker{color:#9caea5;font-size:11px;letter-spacing:.1em;margin:0 0 5px}.title{margin:0;font-size:21px;line-height:1.4}.intro{color:#c4cec8;margin:8px 0 12px}.badges,.legend,.switches{display:flex;align-items:center;flex-wrap:wrap;gap:8px}.badge{font-size:11px;padding:3px 8px;border-radius:99px;background:#26332c;color:#c6d5cc}.badge.warning{background:#3b3020;color:#efd49b}.legend{margin:12px 0;color:#c9d4cd;font-size:12px}.key{display:inline-flex;align-items:center;gap:6px}.dot{width:9px;height:9px;border-radius:50%;background:#e2b776}.dot.ours{background:#a6b8ff}',
+    '.controls{margin:16px 0 8px;padding:0;border:0}.controls legend{font-size:12px;color:#bdcbc3;padding:0;margin-bottom:8px}.scenario{min-height:44px;padding:9px 15px;border:1px solid #435149;border-radius:10px;background:#1c2821;color:#d5dfd8}.scenario[aria-pressed="true"]{border-color:#b4c3ff;background:#303b59;color:#f2f5ff}.scenario-description{margin:9px 0 4px;font-size:12px;color:#c1cdc5}.status{min-height:20px;margin:3px 0 10px;font-size:11px;color:#91a59a}.scroll-hint{font-size:11px;color:#a7b8ad;margin:10px 0 7px}',
+    '.viewport{overflow:auto;max-width:100%;border:1px solid #39473f;border-radius:11px;overscroll-behavior-inline:contain;scrollbar-color:#65786b #18241d}.canvas{min-width:1050px;--label:116px}.axis,.lane{display:grid;grid-template-columns:var(--label) minmax(0,1fr)}.axis{background:#223029;border-bottom:1px solid #405047}.axis-label,.lane-label{position:sticky;left:0;z-index:2;background:#1d2b23;padding:12px 10px;box-shadow:1px 0 0 #405047}.axis-label{font-size:11px;color:#bfcec4;display:flex;align-items:center}.periods{display:grid;grid-template-columns:repeat(6,minmax(0,1fr))}.period{padding:11px 9px;border-left:1px solid #3c4b42}.period strong{display:block;font-size:12px;color:#e2ece5}.period small{display:block;font-size:10px;color:#9fb2a5}.asset+.asset{border-top:1px solid #506153}.asset-head{display:flex;align-items:center;justify-content:space-between;gap:14px;background:#1c2821;padding:10px 12px}.asset-head strong{font-size:15px}.asset-head span{font-size:10px;color:#a9beb0}.asset-head small{font-size:10px;color:#bed0c3;white-space:nowrap}.lane-label{font-size:11px;display:flex;align-items:flex-start;gap:6px;padding-top:17px}.lane-label.video{color:#e7bf80}.lane-label.ours{color:#bec9ff;background:#1d2635}.lane-events{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));grid-auto-rows:minmax(73px,auto);gap:7px 6px;padding:7px 6px;background:repeating-linear-gradient(to right,transparent 0,transparent calc(16.6667% - 1px),#334338 calc(16.6667% - 1px),#334338 16.6667%)}.lane.ours .lane-events{background-color:#1a2230}.event{min-height:58px;min-width:0;text-align:left;border:1px solid #695638;border-left:3px solid #d3ac68;border-radius:7px;padding:8px 9px;background:#30291d;color:#f1e4cb;line-height:1.4;transition:border-color .15s,background .15s}.event:hover{background:#3c3323;border-color:#d3ac68}.event.ours{border-color:#4c5d86;border-left-color:#a6b8ff;background:#27314a;color:#edf0ff}.event.ours:hover{background:#334064;border-color:#bec9ff}.event.active{outline:2px solid #f0f4ed;outline-offset:1px}.event-title{display:block;font-size:12px;font-weight:650}.event-subtitle{display:block;font-size:10px;opacity:.8;margin-top:5px}.event.range{border-style:dashed;background:#303950}.event.range .event-title{font-size:15px;font-variant-numeric:tabular-nums}.empty-lane{grid-column:1/-1;align-self:center;color:#b5c2b9;font-size:12px;margin:7px 9px}.instrument{margin-top:3px;font-size:10px;color:#9eb0a4}',
+    '.node-details{margin:12px 0;border:1px solid #56654e;border-radius:10px;background:#202b22}.node-details[hidden]{display:none}.node-details summary{min-height:44px;padding:11px 13px;cursor:pointer;color:#e0eadb;font-weight:600;line-height:1.5}.detail-body{padding:0 14px 14px;color:#d0dbd3;font-size:13px}.detail-body p{margin:8px 0}.detail-meta{font-size:11px;color:#b0c3b7}.detail-body h4{font-size:12px;margin:14px 0 5px;color:#e5ede7}.detail-body ul{margin:5px 0;padding-left:20px}.detail-body li{margin:4px 0}.detail-close{min-height:44px;padding:8px 12px;margin-top:10px;background:#293a2e;border:1px solid #5b7160;border-radius:8px;color:#dce6de}.source-links{display:flex;flex-wrap:wrap;gap:6px 12px;margin:8px 0}.source-links a{color:#b4d6ff;min-height:44px;display:inline-flex;align-items:center;font-size:12px;text-underline-offset:3px}.range-value{font-size:20px;font-weight:700;color:#e6eaff;font-variant-numeric:tabular-nums}.boundary{border-left:2px solid #c7a66c;padding-left:10px;color:#d5c5a4;font-size:12px}.assumptions{border-top:1px solid #3a4b3f;margin-top:16px;padding-top:8px}.assumptions summary{min-height:44px;cursor:pointer;font-size:13px;color:#d4dfd7;padding:9px 0}.assumptions h4{font-size:13px;margin:15px 0 5px}.assumptions p,.assumptions li{font-size:12px;color:#b8c9bd}.assumptions ul{padding-left:20px}.macro-table{border-collapse:collapse;width:100%;font-size:11px;margin:8px 0}.macro-table th,.macro-table td{text-align:left;vertical-align:top;border-bottom:1px solid #3a4b3f;padding:9px 7px}.macro-table th{color:#e2ebe4}.macro-table td{color:#b9c9be}.footnote{font-size:11px;color:#a5b6aa;margin:12px 0 0}',
+    '@media(max-width:520px){.frame{padding:14px 12px;border-radius:12px}.title{font-size:18px}.intro{font-size:12px}.scenario{padding:8px 12px}.macro-table{font-size:10px}.macro-table th,.macro-table td{padding:7px 4px}.badge{font-size:10px}.source-links{gap:2px 10px}}@media(prefers-reduced-motion:reduce){.event{transition:none}}'
+  ].join('\n');
+
+  function el(tag, className, text) {
+    const n = document.createElement(tag);
+    if (className) n.className = className;
+    if (text !== undefined) n.textContent = text;
+    return n;
+  }
+  function readPreferences() {
+    const fallback = { scenario: 'base', selected: '', detailsOpen: false, assumptionsOpen: false, scrollLeft: 0 };
+    try {
+      let saved = memoryPreferences;
+      if (!saved) {
+        try { saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || '{}'); } catch (_) { saved = {}; }
+      }
+      return {
+        scenario: Object.hasOwn(SCENARIOS, saved.scenario) ? saved.scenario : 'base',
+        selected: typeof saved.selected === 'string' ? saved.selected.slice(0, 80) : '',
+        detailsOpen: saved.detailsOpen === true,
+        assumptionsOpen: saved.assumptionsOpen === true,
+        scrollLeft: Number.isFinite(saved.scrollLeft) ? Math.min(2000, Math.max(0, saved.scrollLeft)) : 0
+      };
+    } catch (_) { return fallback; }
+  }
+
+  class MarketOutlookComparison extends HTMLElement {
+    constructor() {
+      super();
+      this.attachShadow({ mode: 'open' });
+      this.preferences = readPreferences();
+      this.nodeMap = new Map();
+      this.rangeButtons = [];
+    }
+    connectedCallback() {
+      if (this.shadowRoot.childNodes.length) return;
+      this.render();
+    }
+    disconnectedCallback() {
+      this.savePreferences();
+      if (this.scrollTimer) clearTimeout(this.scrollTimer);
+    }
+    savePreferences() {
+      memoryPreferences = { ...this.preferences };
+      try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(this.preferences)); } catch (_) { /* Keep state across dashboard rerenders even when storage is disabled. */ }
+    }
+    sourceLinks(keys) {
+      const links = el('div', 'source-links');
+      [...new Set(keys)].forEach(key => {
+        if (!Object.hasOwn(SOURCES, key)) return;
+        const [label, href] = SOURCES[key];
+        const a = el('a', '', label + ' ↗');
+        a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer';
+        links.append(a);
+      });
+      return links;
+    }
+    makeEvent(data, market, ours) {
+      const button = el('button', 'event' + (ours ? ' ours' : '') + (data.kind === 'range' ? ' range' : ''));
+      button.type = 'button';
+      button.style.gridColumn = String(data.from + 1) + ' / span ' + String(data.span);
+      button.style.gridRow = String(data.row || 1);
+      button.dataset.nodeId = data.id;
+      button.setAttribute('aria-controls', 'outlook-selected-detail');
+      const title = el('span', 'event-title', data.title);
+      const subtitle = el('span', 'event-subtitle', data.subtitle);
+      button.append(title, subtitle);
+      this.nodeMap.set(data.id, { data, market, ours, button });
+      button.addEventListener('click', () => this.selectNode(data.id, true));
+      if (data.kind === 'range') this.rangeButtons.push({ button, title, subtitle, market });
+      return button;
+    }
+    makeLane(market, ours) {
+      const lane = el('div', 'lane' + (ours ? ' ours' : ''));
+      const label = el('div', 'lane-label' + (ours ? ' ours' : ' video'));
+      label.append(el('span', 'dot' + (ours ? ' ours' : '')), el('span', '', ours ? '助理情境' : '影片原路徑'));
+      const events = el('div', 'lane-events');
+      if (ours) {
+        PHASES.forEach(phase => events.append(this.makeEvent({ ...phase, id: market.id + '-a-' + phase.id }, market, true)));
+        events.append(this.makeEvent({ id: market.id + '-a-range', kind: 'range', from: 5, span: 1, title: '', subtitle: '' }, market, true));
+      } else if (market.video.length) {
+        market.video.forEach(data => events.append(this.makeEvent(data, market, false)));
+      } else {
+        events.append(el('p', 'empty-lane', '影片沒有ETH獨立預測。這一軌留白，不套用BTC、NASDAQ或其他資產路徑。'));
+      }
+      lane.append(label, events);
+      return lane;
+    }
+    render() {
+      const root = this.shadowRoot;
+      const style = el('style'); style.textContent = CSS; root.append(style);
+      const frame = el('section', 'frame'); frame.setAttribute('aria-label', '影片與助理情境預估比較時間軸');
+      frame.append(el('p', 'kicker', 'OUTLOOK COMPARISON · 2026.11.26'), el('h3', 'title', '同一時間軸，對照兩組預測'));
+      frame.append(el('p', 'intro', '影片保留原說法；助理這一軌呈現有前提的情境與驗證窗口。橫軸代表時間，不是價格折線。'));
+      const badges = el('div', 'badges');
+      badges.append(el('span', 'badge', '研究版本：2026/11/26'), el('span', 'badge warning', '主觀情境 · 無模型機率'), el('span', 'badge', '期末區間 ≠ 全期間高低'));
+      frame.append(badges);
+      const controls = el('fieldset', 'controls'); controls.append(el('legend', '', '切換助理的2027年底情境'));
+      const switches = el('div', 'switches'); switches.setAttribute('role', 'group'); switches.setAttribute('aria-label', '2027年底情境選擇');
+      this.scenarioButtons = [];
+      Object.entries(SCENARIOS).forEach(([key, value]) => {
+        const b = el('button', 'scenario', value.short); b.type = 'button'; b.dataset.scenario = key;
+        b.addEventListener('click', () => this.changeScenario(key));
+        switches.append(b); this.scenarioButtons.push(b);
+      });
+      controls.append(switches); frame.append(controls);
+      this.scenarioDescription = el('p', 'scenario-description'); frame.append(this.scenarioDescription);
+      this.status = el('p', 'status'); this.status.setAttribute('role', 'status'); this.status.setAttribute('aria-live', 'polite'); this.status.setAttribute('aria-atomic', 'true'); frame.append(this.status);
+
+      const legend = el('div', 'legend');
+      [['影片原路徑', false], ['助理情境／驗證窗口', true]].forEach(([text, ours]) => {
+        const key = el('span', 'key'); key.append(el('span', 'dot' + (ours ? ' ours' : '')), el('span', '', text)); legend.append(key);
+      });
+      frame.append(legend);
+      this.detail = el('details', 'node-details'); this.detail.id = 'outlook-selected-detail'; this.detail.hidden = true;
+      this.detailSummary = el('summary', '', '節點詳情'); this.detailBody = el('div', 'detail-body');
+      this.detail.append(this.detailSummary, this.detailBody);
+      this.detail.addEventListener('toggle', () => {
+        this.preferences.detailsOpen = this.detail.open;
+        this.nodeMap.forEach(({ button }, id) => button.setAttribute('aria-expanded', String(id === this.preferences.selected && this.detail.open)));
+        this.savePreferences();
+      });
+      frame.append(this.detail);
+      frame.append(el('p', 'scroll-hint', '左右滑動看完整時間軸；點選節點查看來源與修正條件。時間依事件分段，非等比例。'));
+      this.viewport = el('div', 'viewport'); this.viewport.tabIndex = 0; this.viewport.setAttribute('role', 'region'); this.viewport.setAttribute('aria-label', '可左右捲動的四市場比較時間軸');
+      const canvas = el('div', 'canvas');
+      const axis = el('div', 'axis'); axis.append(el('div', 'axis-label', '來源／時段'));
+      const periods = el('div', 'periods'); PERIODS.forEach(([main, sub]) => { const p = el('div', 'period'); p.append(el('strong', '', main), el('small', '', sub)); periods.append(p); });
+      axis.append(periods); canvas.append(axis);
+      MARKETS.forEach(market => {
+        const section = el('section', 'asset'); section.setAttribute('aria-label', market.name + '預測比較');
+        const head = el('div', 'asset-head');
+        const heading = el('div'); heading.append(el('strong', '', market.name), el('div', 'instrument', market.instrument));
+        head.append(heading, el('small', '', market.reference)); section.append(head, this.makeLane(market, false), this.makeLane(market, true)); canvas.append(section);
+      });
+      this.viewport.append(canvas); frame.append(this.viewport);
+      this.viewport.addEventListener('scroll', () => {
+        this.preferences.scrollLeft = this.viewport.scrollLeft;
+        if (this.scrollTimer) clearTimeout(this.scrollTimer);
+        this.scrollTimer = setTimeout(() => this.savePreferences(), 150);
+      }, { passive: true });
+      frame.append(el('p', 'footnote', '所有價格帶以美元計價（美股為指數點位），不含股息、質押收益與匯率。各資產可以落在不同情境；期末帶不是買點、保證支撐或價格上下限。'));
+      frame.append(this.makeAssumptions());
+      root.append(frame);
+      this.updateScenario(false);
+      if (this.nodeMap.has(this.preferences.selected)) this.selectNode(this.preferences.selected, false);
+      requestAnimationFrame(() => { if (this.isConnected) this.viewport.scrollLeft = this.preferences.scrollLeft; });
+    }
+    changeScenario(key) {
+      if (!Object.hasOwn(SCENARIOS, key)) return;
+      this.preferences.scenario = key; this.savePreferences(); this.updateScenario(true);
+      if (this.nodeMap.has(this.preferences.selected)) this.fillDetail(this.preferences.selected);
+    }
+    updateScenario(announce) {
+      const key = this.preferences.scenario;
+      this.scenarioButtons.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.scenario === key)));
+      this.scenarioDescription.textContent = SCENARIOS[key].description;
+      this.rangeButtons.forEach(({ button, title, subtitle, market }) => {
+        title.textContent = market.ranges[key];
+        const unit = market.id === 'spx' ? '點' : market.id === 'gold' ? '美元／盎司' : '美元';
+        subtitle.textContent = '2027年底 · ' + SCENARIOS[key].short + '／' + unit;
+        button.setAttribute('aria-label', market.name + '2027年底' + SCENARIOS[key].short + '情境，' + market.ranges[key] + unit + '，開啟假設與來源');
+      });
+      this.status.textContent = announce ? '已切換為' + SCENARIOS[key].label + '。只調整期末帶與假設，不改寫影片原路徑。' : '目前顯示：' + SCENARIOS[key].label + '。點節點可展開細節。';
+    }
+    selectNode(id, interact) {
+      if (!this.nodeMap.has(id)) return;
+      this.preferences.selected = id;
+      if (interact) this.preferences.detailsOpen = true;
+      this.fillDetail(id); this.savePreferences();
+      if (interact) {
+        this.detailSummary.focus({ preventScroll: true });
+        const reduce = globalThis.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+        this.detail.scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' });
+      }
+    }
+    fillDetail(id) {
+      const entry = this.nodeMap.get(id); if (!entry) return;
+      const { data, market, ours } = entry;
+      this.detailBody.replaceChildren(); this.detail.hidden = false;
+      this.detailSummary.textContent = market.name + ' · ' + (ours ? '助理情境' : '影片原路徑') + '｜' + (data.kind === 'range' ? '2027年底期末帶' : data.title);
+      this.nodeMap.forEach(({ button }, nodeId) => { button.classList.toggle('active', nodeId === id); button.setAttribute('aria-expanded', String(nodeId === id && this.preferences.detailsOpen)); });
+      if (!ours) {
+        this.detailBody.append(el('p', 'detail-meta', '來源錄製／整理版本：' + data.recorded), el('p', '', data.detail));
+        this.detailBody.append(el('p', 'boundary', '這是影片假說，不是助理指定的交易路徑。原始GC／ES與助理現貨參考口徑不同，不在此計算命中率。'));
+      } else {
+        this.detailBody.append(el('p', 'detail-meta', '助理研究版本：2026/11/26 · ' + SCENARIOS[this.preferences.scenario].label));
+        if (data.kind === 'range') {
+          this.detailBody.append(el('p', 'range-value', market.ranges[this.preferences.scenario] + (market.id === 'spx' ? ' 點' : market.id === 'gold' ? ' 美元／盎司' : ' 美元')));
+          this.detailBody.append(el('p', '', '2027年底的期末情境，不是2027全年高低。數字取整，無已校準機率；極端結果可能超出。'));
+        } else this.detailBody.append(el('p', '', data.detail));
+        this.detailBody.append(el('p', '', market.reasoning), el('p', '', SCENARIOS[this.preferences.scenario].description));
+        [['較支持上修的證據', market.support], ['需降低修復情境權重的證據', market.risk]].forEach(([title, list]) => {
+          this.detailBody.append(el('h4', '', title)); const ul = el('ul'); list.forEach(text => ul.append(el('li', '', text))); this.detailBody.append(ul);
+        });
+        this.detailBody.append(el('p', 'detail-meta', market.referenceDetail), this.sourceLinks(market.sourceKeys));
+        this.detailBody.append(el('p', 'boundary', '價格帶是主觀情境示例，不是由波動率、估值模型或樣本外誤差直接算出的信賴區間。不能把更細的文字理解為更精準的預測。'));
+      }
+      const close = el('button', 'detail-close', '收合節點詳情'); close.type = 'button';
+      close.addEventListener('click', () => { this.detail.open = false; this.preferences.detailsOpen = false; this.savePreferences(); entry.button.focus({ preventScroll: true }); });
+      this.detailBody.append(close); this.detail.open = this.preferences.detailsOpen;
+    }
+    makeAssumptions() {
+      const details = el('details', 'assumptions'); details.open = this.preferences.assumptionsOpen;
+      details.append(el('summary', '', '假設、觀察門檻與資料來源'));
+      details.append(el('p', '', '這個固定版本沒有自動更新報價。影片節點保留原說法；助理各季標籤只是核對窗口，不指定季度必轉折。若之後修正，應另留版本，不覆蓋原先假說。'));
+      details.append(el('h4', '', '美元與美債：需要一起看原因'));
+      details.append(el('p', '', '實質利率下降且信用穩定，較支持修復；殖利率若因衰退、信用壓力升高而下降，不等於風險資產利多。短債與長債也不同，不能把長天期債券當成美元現金。'));
+      const table = el('table', 'macro-table');
+      const thead = el('thead'); const hr = el('tr'); ['觀察項目', '本次參考', '偏支持／需警戒'].forEach(text => hr.append(el('th', '', text))); thead.append(hr); table.append(thead);
+      const tbody = el('tbody');
+      [
+        ['同一廣義美元指數', 'Fed資料至11/20', '4週回落約3%／上升約3%；需同時看信用與實質利率，不能混用DXY。'],
+        ['10年實質殖利率', '2.79% · 11/24', '低於2.4%／高於3.1%，持續3–4週再核對。'],
+        ['高收益債信用利差', '3.72% · 11/24', '低於3.5%／高於4.5%；擴大代表壓力，不直接等同危機。'],
+        ['BTC／ETH ETF', 'Farside已報至11/25', '需5／20個完整交易日資金流改善；不能把缺報當零。']
+      ].forEach(row => { const tr = el('tr'); row.forEach(text => tr.append(el('td', '', text))); tbody.append(tr); });
+      table.append(tbody); details.append(table);
+      details.append(el('p', 'boundary', '以上數字全是人訂追蹤線，未回測、未作機率校準，不是買賣開關或底部確認。不要因單日穿越就切換整體結論。'));
+      details.append(el('h4', '', '資金流與來源範圍'));
+      details.append(el('p', '', 'Farside所列基金於最近5個已報交易日（11/19、20、23、24、25），BTC ETF合計淨流出25.056億美元，ETH ETF合計淨流出4.46億美元。這不是全部機構，也與較早日報的日期及基金覆蓋可能不同，不能直接混比。'));
+      details.append(el('p', '', '黃金需求支持來自Q3央行與ETF資料；季度資料不能證明11月已見底。六個追蹤錢包只作補充，其單日加減倉不代表全市場或完整資產組合。'));
+      details.append(el('h4', '', '參考價的實際時間與口徑'));
+      const refs = el('ul'); MARKETS.forEach(market => refs.append(el('li', '', market.name + '：' + market.referenceDetail))); details.append(refs);
+      details.append(el('p', '', '美股可用未來獲利與估值倍數拆解，但2027年底需要當時的forward EPS；不能把CY2027分析師獲利增幅直接當價格報酬。BTC／ETH／黃金的區間也沒有已校準估值模型。'));
+      details.append(this.sourceLinks(Object.keys(SOURCES)));
+      details.addEventListener('toggle', () => { this.preferences.assumptionsOpen = details.open; this.savePreferences(); });
+      return details;
+    }
+  }
+  customElements.define('market-outlook-comparison', MarketOutlookComparison);
+})();
+
+</script>
+<script>
 // ======================= 設定（放到 GitHub Pages 時改這裡） =======================
 const CONFIG = {
   // 直連模式要顯示的錢包（從電腦打開時，會自動改用 hl_monitor.py 裡的名單）
@@ -268,9 +609,12 @@ const CONFIG = {
   }
   function forecastTimelinePanel() {
     const assets = "./analysis/assets/forecast-timeline-2026-11-18";
-    return `<section class="forecast-timeline" aria-label="影片預測總時間軸">
-      <h3>影片預測總時間軸</h3>
-      <p class="small sec">四支影片對美股、科技股、BTC、黃金、原油與美債的預測，依時間並列，保留目標價、條件與修改版本。</p>
+    const legacyOpen = store.get("hl.forecast.legacyOpen", "false") === "true";
+    return `<section class="forecast-timeline" id="forecast-outlook" style="scroll-margin-top:110px" aria-label="影片與助理預測時間軸">
+      <market-outlook-comparison></market-outlook-comparison>
+      <details class="original-forecast" style="margin-top:20px" ${legacyOpen ? "open" : ""}>
+        <summary style="cursor:pointer;min-height:44px;display:list-item;padding:12px 4px;font-weight:650">查看影片原始完整時間圖（含原油、美債及較遠期）</summary>
+        <p class="small muted">以下保留2026/11/18製圖版本。它與上方2026/11/26情境預估的來源及更新日期不同。</p>
       <figure>
         <a class="timeline-preview" href="${assets}.png" target="_blank" rel="noopener noreferrer" aria-label="開啟完整預測時間軸，可放大閱讀">
           <img src="${assets}-preview.webp" width="1600" height="1440" loading="lazy" decoding="async" alt="四支影片預測總時間軸，按六類資產分列，呈現2026年9月至2030年底的預測節點與版本修正。">
@@ -282,6 +626,8 @@ const CONFIG = {
         <a href="${assets}.pdf" target="_blank" rel="noopener noreferrer">開啟／下載 PDF ↗</a>
       </div>
       <p class="small muted" style="margin:12px 0 0">製圖：2026/11/18；實際行情核對截至 2026/11/16。這是固定版本的預測參考圖，箭頭不代表實際走勢；時間區段非等比例。</p>
+
+      </details>
     </section>`;
   }
   function analysisPanel(user) {
@@ -290,9 +636,10 @@ const CONFIG = {
     if (!entry) return '<div class="empty">'+(reportError?'分析載入失敗，請重新整理。':reports?'此地址尚無日報，新名單等待雲端分析完成。':'分析載入中…')+'</div>'+timeline;
     const time = new Date(entry.updatedAt).toLocaleString("zh-TW",{timeZone:"Asia/Taipei",hour12:false});
     const combined = combinedReport?.report && CONFIG.traders.every(trader => reports?.[trader.user]) ? '<hr style="border:0;border-top:1px solid var(--line);margin:20px 0"><strong>六個地址綜合結論</strong><div class="small muted">'+esc(new Date(combinedReport.updatedAt).toLocaleString("zh-TW",{timeZone:"Asia/Taipei",hour12:false}))+' 台灣時間</div><div style="white-space:pre-line;line-height:1.65;margin-top:8px">'+esc(combinedReport.report)+'</div>' : '';
-    return '<div class="small muted">'+esc(entry.name)+' · '+esc(time)+' 台灣時間'+(reportError?' · 顯示上次資料':'')+'</div><div style="white-space:pre-line;line-height:1.65;margin-top:8px">'+esc(entry.report)+'</div>'+combined+timeline;
+    return '<a href="#forecast-outlook" style="display:inline-flex;align-items:center;min-height:44px;margin-bottom:16px;padding:8px 12px;border:1px solid var(--line);border-radius:10px">查看影片 × 助理預測時間軸 ↓</a><div class="small muted">'+esc(entry.name)+' · '+esc(time)+' 台灣時間'+(reportError?' · 顯示上次資料':'')+'</div><div style="white-space:pre-line;line-height:1.65;margin-top:8px">'+esc(entry.report)+'</div>'+combined+timeline;
   }
-  let sortKey = store.get("hl.sort", "value");
+  const requestedView = new URLSearchParams(location.search).get("tab");
+  let sortKey = ["value", "pnl", "coin", "ops", "analysis"].includes(requestedView) ? requestedView : store.get("hl.sort", "value");
   if (sortKey === "recent") sortKey = "ops";
   const OPS_WINDOWS = [["recent", 0, `近${CONFIG.recentMinutes || 60}分`], ["10k", 0, "近1萬筆"]];
   let opsWin = store.get("hl.opsWin", "recent");
@@ -933,6 +1280,7 @@ const CONFIG = {
       return refresh();
     }
   });
+  document.addEventListener("toggle", (e) => { if (e.target.matches?.("details.original-forecast")) store.set("hl.forecast.legacyOpen", String(e.target.open)); }, true);
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") refresh(); });
   let rz;
   window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => data && drawChart(), 150); });
@@ -949,3 +1297,4 @@ const CONFIG = {
 </script>
 </body>
 </html>
+
